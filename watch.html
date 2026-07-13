@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<title>F48 Watch</title>
+<style>
+  :root{--ink:#000;--card:#141f18;--line:#2a4033;--cream:#f3eddc;--dim:#93a293;
+    --turmeric:#e8a63c;--leaf:#7fbf8e;--chili:#e06a4f;
+    --z1:#6b7a6b;--z2:#5aa2c9;--z3:#7fbf8e;--z4:#e8a63c;--z5:#e06a4f}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
+  html{font-size:4vmin}
+  html,body{height:100%;background:var(--ink);color:var(--cream);
+    font-family:-apple-system,'Segoe UI',Roboto,'Noto Sans',sans-serif;overflow:hidden}
+  .scr{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;padding:13% 14%;gap:.5rem}
+  .scr.act{display:flex}
+  .eyebrow{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--turmeric)}
+  .big{font-size:1.2rem;font-weight:800;line-height:1.2}
+  .mid{font-size:.92rem;font-weight:700;line-height:1.25}
+  .dimtx{font-size:.66rem;color:var(--dim);line-height:1.35}
+  .rx{color:var(--turmeric);font-weight:800;font-size:.95rem}
+  button{border:0;border-radius:999px;font-weight:800;font-family:inherit;color:#1c1608;background:var(--turmeric)}
+  .btn{width:100%;padding:.8rem .5rem;font-size:.92rem}
+  .btn.grn{background:var(--leaf);color:#10241a}
+  .btn.ghost{background:var(--card);color:var(--cream);border:1px solid var(--line)}
+  .btn:active{transform:scale(.96)}
+  .chev{position:absolute;top:50%;transform:translateY(-50%);width:2rem;height:2rem;
+    border-radius:50%;background:var(--card);color:var(--cream);font-size:1rem;
+    border:1px solid var(--line);z-index:5}
+  .chev.l{left:2%}.chev.r{right:2%}
+  .sets{display:flex;gap:.35rem;justify-content:center}
+  .sets i{width:.5rem;height:.5rem;border-radius:50%;border:1px solid var(--turmeric)}
+  .sets i.on{background:var(--turmeric)}
+  .clockbig{font-size:3rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+  .clockbig.warn{color:var(--chili)}
+  #restScr .clockbig{color:var(--leaf)}
+  #workScr .clockbig{color:var(--turmeric)}
+  .cue{font-size:.64rem;color:var(--dim);line-height:1.35;display:-webkit-box;
+    -webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .cue.open{-webkit-line-clamp:unset;max-height:34vh;overflow-y:auto}
+  .chip{font-size:.58rem;color:var(--leaf);border:1px solid var(--line);border-radius:999px;
+    padding:.14rem .55rem;background:var(--card)}
+  .chip.deload{color:var(--turmeric);border-color:var(--turmeric)}
+  /* live HR pill — visible on all in-session screens */
+  #hrPill{position:absolute;top:3.5%;left:50%;transform:translateX(-50%);z-index:9;
+    display:none;align-items:center;gap:.3rem;background:var(--card);
+    border:1px solid var(--line);border-radius:999px;padding:.18rem .65rem;
+    font-size:.72rem;font-weight:800}
+  #hrPill.on{display:flex}
+  #hrPill .z{font-size:.58rem;padding:.05rem .4rem;border-radius:999px;color:#10241a;background:var(--z1)}
+  /* summary */
+  .stat{display:flex;justify-content:space-between;width:100%;font-size:.7rem;
+    padding:.22rem 0;border-bottom:1px solid var(--line)}
+  .stat b{color:var(--turmeric)}
+  .zbar{display:flex;width:100%;height:.55rem;border-radius:999px;overflow:hidden;background:var(--card)}
+  .zbar i{height:100%}
+  .scroll{width:100%;max-height:52vh;overflow-y:auto}
+  .sess{width:100%;text-align:left;background:var(--card);border:1px solid var(--line);
+    border-radius:.7rem;padding:.5rem .6rem;margin-bottom:.4rem;font-size:.62rem;color:var(--dim)}
+  .sess b{color:var(--cream);font-size:.7rem;display:block}
+  #syncDot{position:absolute;bottom:4%;left:50%;transform:translateX(-50%);
+    font-size:.55rem;color:var(--dim);z-index:9}
+</style>
+</head>
+<body>
+
+<div id="hrPill"><span>♥</span><span id="hrVal">--</span><span class="z" id="hrZone">Z1</span></div>
+<div id="syncDot"></div>
+
+<div class="scr act" id="homeScr">
+  <div class="eyebrow">Foundation 48</div>
+  <div class="big" id="homeDay">Monday</div>
+  <div class="dimtx" id="homeTitle">…</div>
+  <span class="chip" id="homeChip">…</span>
+  <input type="date" id="startPick" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none">
+  <button class="btn grn" id="startBtn">Start ▶</button>
+  <button class="btn ghost" id="resumeBtn" style="display:none">Resume</button>
+  <button class="btn ghost" id="histBtn">📊 History</button>
+  <div class="dimtx" id="homeProg"></div>
+  <button class="chev l" id="dayPrev">‹</button>
+  <button class="chev r" id="dayNext">›</button>
+</div>
+
+<div class="scr" id="spo2Scr">
+  <div class="eyebrow" id="spo2Title">Blood oxygen</div>
+  <div class="clockbig" id="spo2Val" style="font-size:2.4rem">--</div>
+  <div class="dimtx" id="spo2Hint">Hold your wrist still at heart height. Takes ~30s.</div>
+  <button class="btn grn" id="spo2Go">Measure</button>
+  <button class="btn ghost" id="spo2Skip">Skip ›</button>
+</div>
+
+<div class="scr" id="exScr">
+  <div class="eyebrow" id="exCount">1 / 12</div>
+  <div class="mid" id="exName">Exercise</div>
+  <div class="rx" id="exRx">3×12</div>
+  <div class="sets" id="exSets"></div>
+  <div class="cue" id="exCue">cue</div>
+  <button class="btn" id="exMain">✓ Set done</button>
+  <button class="btn ghost" id="exSkip">Skip ›</button>
+  <button class="chev l" id="exPrev">‹</button>
+  <button class="chev r" id="exNext">›</button>
+</div>
+
+<div class="scr" id="workScr">
+  <div class="eyebrow" id="workName">Hold</div>
+  <div class="clockbig" id="workClock">0:30</div>
+  <div class="dimtx" id="workHint">work — tap to stop</div>
+</div>
+
+<div class="scr" id="restScr">
+  <div class="eyebrow">Rest</div>
+  <div class="clockbig" id="restClock">0:45</div>
+  <div class="dimtx" id="restNext">next: …</div>
+  <button class="btn ghost" id="restSkip">Skip rest ›</button>
+</div>
+
+<div class="scr" id="sumScr">
+  <div class="eyebrow">Session summary</div>
+  <div class="scroll" id="sumBody"></div>
+  <button class="btn" id="sumHome">Save · Home</button>
+</div>
+
+<div class="scr" id="histScr">
+  <div class="eyebrow">History · newest first</div>
+  <div class="scroll" id="histBody"></div>
+  <button class="btn ghost" id="histHome">‹ Home</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+/* ================= SYNC (shared model with browser app) ================= */
+const FB_CONFIG = {
+  apiKey: "AIzaSyBTkIrGA2pLGNKfGg0pvotAusTFyctld24",
+  authDomain: "foundationwatch.firebaseapp.com",
+  databaseURL: "https://foundationwatch-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "foundationwatch",
+  storageBucket: "foundationwatch.firebasestorage.app",
+  messagingSenderId: "373144848891",
+  appId: "1:373144848891:web:533a6167349da4e356a35e"
+};
+const TOKEN = "f48-4ab637ff2a8b946818b4bbd243a9017672cfa050";
+let RB = null;  // firebase root ref
+try{
+  firebase.initializeApp(FB_CONFIG);
+  RB = firebase.database().ref('u/'+TOKEN);
+}catch(e){}
+const $ = id => document.getElementById(id);
+const K  = k => { try{ return localStorage.getItem(k); }catch(_){ return null; } };
+const KS = (k,v) => { try{ localStorage.setItem(k,v); }catch(_){} };
+function syncDot(t){ $('syncDot').textContent = t||''; }
+
+/* profile defaults (age fixed for zone math; resting HR & weight editable in browser app) */
+let PROFILE = {restingHr:65, weightKg:75, age:48};
+try{ Object.assign(PROFILE, JSON.parse(K('f48-profile'))||{}); }catch(_){}
+if(RB){
+  RB.child('profile').on('value', s=>{
+    if(s.val()){ Object.assign(PROFILE, s.val()); KS('f48-profile', JSON.stringify(PROFILE)); }
+  });
+  RB.child('start').on('value', s=>{ if(s.val()){ KS('f48w-startdate', s.val()); weekChip(); } });
+  RB.on('value', ()=>syncDot('synced ✓'), ()=>syncDot('offline — saving locally'));
+}else syncDot('offline — saving locally');
+
+/* ================= program data (session runner only) ================= */
+const DAYS = [
+ {id:'mon', label:'Monday', title:'Lower Body', ex:[
+  {n:'March in place', rx:'60s', c:'Easy pace, arms swinging.'},
+  {n:'Cat–Cow', rx:'8 reps', c:'Hands and knees, move with the breath.'},
+  {n:'Arm + hip circles', rx:'10 each way', c:'Shoulders, hips, ankles.'},
+  {n:'Chair sit-to-stand', rx:'4×10–15', c:'3s down, knees over toes. Hardest clean version.'},
+  {n:'Glute bridge', rx:'4×12–15', c:'Squeeze 2–3s at top, ribs down.'},
+  {n:'Band Romanian deadlift', rx:'3×12–15', c:'Flat-back hinge, hips drive forward.'},
+  {n:'Supported step-up', rx:'3×8–10/side', c:'Hand on rail, top heel drives, lower slow.'},
+  {n:'Hip flexor stretch', rx:'2×30s/side', c:'Chair support, tuck tailbone, shift forward.'},
+  {n:'Knee-to-wall rocks', rx:'2×10/side', c:'Foot flat, knee toward wall.'},
+  {n:'Calf raises', rx:'3×15', c:'3s down. Wk5+ single-leg.'},
+  {n:'Side-lying leg lift', rx:'3×12/side', c:'Lift slow to hip height.'},
+  {n:'Slow breathing', rx:'3 min', c:'In 4, out 6–8. HRV is measured here — lie still.'}
+ ]},
+ {id:'tue', label:'Tuesday', title:'Posture + Pull', ex:[
+  {n:'March in place', rx:'60s', c:'Easy pace.'},
+  {n:'Cat–Cow', rx:'8 reps', c:'Move with the breath.'},
+  {n:'Arm + hip circles', rx:'10 each way', c:'Shoulders, hips, ankles.'},
+  {n:'Wall angels', rx:'3×8', c:'Back and head on wall, keep contact.'},
+  {n:'Chin tucks', rx:'2×10', c:'Glide head back, hold 3s.'},
+  {n:'Band bent-over row', rx:'4×10–15', c:'Flat back, squeeze blades 2s.'},
+  {n:'Band lat pulldown', rx:'4×10–15', c:'Half-kneeling, elbows to ribs, squeeze 2s.'},
+  {n:'Band pull-apart', rx:'3×15–20', c:'Arms straight, squeeze between blades.'},
+  {n:'Farmer carry', rx:'3×45–60s', c:'Heavy bags, walk tall. Heavy by last 15s.'},
+  {n:'Towel wring', rx:'2×10 each way', c:'Twist hard both directions.'},
+  {n:'Slow breathing', rx:'3 min', c:'In 4, out 6–8. HRV is measured here — lie still.'}
+ ]},
+ {id:'wed', label:'Wednesday', title:'Active Recovery', ex:[
+  {n:'Easy walk', rx:'20–30 min', c:'Conversational pace.'},
+  {n:'Cat–Cow + Child\u2019s pose', rx:'5 min', c:'Gentle spine movement, then breathe.'},
+  {n:'Legs-up-the-wall', rx:'10 min', c:'Evening. Lower-back decompression.'}
+ ]},
+ {id:'thu', label:'Thursday', title:'Push + Core', ex:[
+  {n:'March in place', rx:'60s', c:'Easy pace.'},
+  {n:'Cat–Cow', rx:'8 reps', c:'Move with the breath.'},
+  {n:'Arm + hip circles', rx:'10 each way', c:'Shoulders, hips, ankles.'},
+  {n:'Push-up (your level)', rx:'4×8–15', c:'Straight line, elbows ~45°. Hardest level you own.'},
+  {n:'Band chest press', rx:'4×10–15', c:'Anchored behind, press and squeeze 1s.'},
+  {n:'Dead bug', rx:'3×10/side', c:'Lower back pressed down, slow.'},
+  {n:'Bird dog', rx:'3×10/side', c:'Opposite arm+leg, back still.'},
+  {n:'Band Pallof press', rx:'3×10/side', c:'Press out, refuse the twist.'},
+  {n:'Knee side plank', rx:'3×20–40s/side', c:'Hips lifted in one line.'},
+  {n:'Forearm plank', rx:'3× max hold', c:'Stop 2s before form breaks.'},
+  {n:'Slow breathing', rx:'3 min', c:'In 4, out 6–8. HRV is measured here — lie still.'}
+ ]},
+ {id:'fri', label:'Friday', title:'Full Body circuit', ex:[
+  {n:'March in place', rx:'60s', c:'Easy pace.'},
+  {n:'Cat–Cow', rx:'8 reps', c:'Move with the breath.'},
+  {n:'Sit-to-stand', rx:'3×12', c:'Smooth and quiet.'},
+  {n:'Band row', rx:'3×12', c:'Flat back, squeeze 2s.'},
+  {n:'Push-up (your level)', rx:'3×10', c:'Whichever level you\u2019ve earned.'},
+  {n:'Band Romanian deadlift', rx:'3×12', c:'Hips do the work.'},
+  {n:'Glute bridge march', rx:'3×8/side', c:'Hold bridge, lift one foot then other.'},
+  {n:'Suitcase carry', rx:'3×40s/side', c:'One heavy bag, perfectly upright.'},
+  {n:'Brisk walk', rx:'8–10 min', c:'Faster than Wednesday.'},
+  {n:'Slow breathing', rx:'3 min', c:'In 4, out 6–8. HRV is measured here — lie still.'}
+ ]},
+ {id:'sat', label:'Saturday', title:'Flexibility Flow', ex:[
+  {n:'Cat–Cow', rx:'10 reps', c:'Spine warm-up first.'},
+  {n:'90/90 hip stretch', rx:'2×45s/side', c:'Sit tall, cushion if needed.'},
+  {n:'Low lunge opener', rx:'2×40s/side', c:'Cushion under back knee, sink forward.'},
+  {n:'Hamstring strap stretch', rx:'2×40s/side', c:'Towel around foot, mild stretch.'},
+  {n:'Thread the needle', rx:'2×30s/side', c:'Slide one arm under.'},
+  {n:'Knee-to-wall rocks', rx:'2×10/side', c:'Second ankle dose.'},
+  {n:'Slow breathing', rx:'3 min', c:'Child\u2019s pose. HRV is measured here — be still.'}
+ ]},
+ {id:'sun', label:'Sunday', title:'Full Rest', ex:[
+  {n:'Optional easy walk', rx:'20 min', c:'Only if you feel like it.'},
+  {n:'Weekly joint check', rx:'2 min', c:'Knees, back, shoulders, wrists /10.'},
+  {n:'Every 2nd Sun: measure', rx:'5 min', c:'Enter the five metrics in the browser app.'}
+ ]}
+];
+
+/* ================= helpers ================= */
+const buzz = p => { try{ navigator.vibrate && navigator.vibrate(p); }catch(_){} };
+function beep(f,d){ try{
+  const c=new (window.AudioContext||window.webkitAudioContext)();
+  const o=c.createOscillator(),g=c.createGain();
+  o.connect(g);g.connect(c.destination);o.frequency.value=f||880;
+  g.gain.setValueAtTime(.3,c.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,c.currentTime+(d||.5));
+  o.start();o.stop(c.currentTime+(d||.5));
+}catch(_){}}
+function fmt(s){ return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function setsOf(rx){ const m=rx.match(/^(\d+)×/); return m?+m[1]:1; }
+function workSecs(rx){
+  let m;
+  if(m=rx.match(/(\d+)(?:[–-](\d+))?\s*min/)) return (m[2]?+m[2]:+m[1])*60;
+  if(m=rx.match(/(\d+)(?:[–-](\d+))?s/)) return m[2]?+m[2]:+m[1];
+  if(/max hold/.test(rx)) return 60;
+  return 0;
+}
+function show(id){ document.querySelectorAll('.scr').forEach(s=>s.classList.toggle('act',s.id===id)); }
+
+/* ================= HR / sensors (native bridge or sim) ================= */
+const SIM = /[?&]sim=1/.test(location.search);
+const NATIVE = () => window.F48Native || null;
+const HRMAX_FALLBACK = 220 - PROFILE.age;   // 172
+let S = null;                               // live session record
+let simInt = null;
+
+function zoneOf(bpm){
+  const p = bpm / hrMax() * 100;
+  return p<60?1 : p<70?2 : p<80?3 : p<90?4 : 5;
+}
+function hrMax(){
+  const hist = allSessions();
+  let mx = HRMAX_FALLBACK;
+  hist.forEach(s=>{ if(s.maxHr && s.maxHr>mx) mx=s.maxHr; });
+  return mx;
+}
+const ZC = {1:'var(--z1)',2:'var(--z2)',3:'var(--z3)',4:'var(--z4)',5:'var(--z5)'};
+
+window.__hr = function(bpm){          // called by native layer (or sim)
+  bpm = Math.round(bpm);
+  if(!bpm || bpm<25 || bpm>230) return;
+  $('hrVal').textContent = bpm;
+  const z = zoneOf(bpm);
+  $('hrZone').textContent = 'Z'+z;
+  $('hrZone').style.background = ZC[z];
+  if(!S) return;
+  const now = Date.now();
+  const dt = S.lastHrT ? Math.min((now-S.lastHrT)/1000, 10) : 1;
+  S.lastHrT = now;
+  S.hrN++; S.hrSum += bpm; S.maxHr = Math.max(S.maxHr, bpm); S.minHr = Math.min(S.minHr, bpm);
+  S.zones[z] += dt;
+  /* Keytel (male): kcal/min = (-55.0969 + 0.6309·HR + 0.1988·kg + 0.2017·age) / 4.184 */
+  const rate = (-55.0969 + 0.6309*bpm + 0.1988*PROFILE.weightKg + 0.2017*PROFILE.age)/4.184;
+  if(rate>0) S.kcal += rate*dt/60;
+};
+window.__ibi = function(ms, ok){      // inter-beat interval during cooldown → HRV
+  if(!S || !S.hrvOn) return;
+  if(ok!==undefined && +ok!==0) return;      // Samsung SDK: status 0 = valid
+  if(ms>=300 && ms<=2000) S.ibis.push(+ms);
+};
+window.__spo2 = function(v, status){  // spot reading result
+  spo2Result(v, status);
+};
+
+function startSensors(){
+  const n = NATIVE();
+  if(n && n.startHr){ try{ n.startHr(); }catch(_){} }
+  if(SIM){
+    clearInterval(simInt);
+    let base=95;
+    simInt = setInterval(()=>{
+      base += (Math.random()-.45)*6; base=Math.max(70,Math.min(165,base));
+      window.__hr(base);
+      if(S && S.hrvOn) window.__ibi(750+Math.round((Math.random()-.5)*120), 0);
+    },1000);
+  }
+}
+function stopSensors(){
+  const n = NATIVE();
+  if(n && n.stopHr){ try{ n.stopHr(); }catch(_){} }
+  clearInterval(simInt); simInt=null;
+}
+
+/* ================= session lifecycle ================= */
+let dayIdx=(new Date().getDay()+6)%7, exIdx=0, setDone=0, sess=null;
+const REST=45;
+function loadSess(){ try{ sess=JSON.parse(K('f48w-'+todayISO()))||{}; }catch(_){ sess={}; } }
+function saveSess(){
+  KS('f48w-'+todayISO(), JSON.stringify(sess||{}));
+  if(RB) RB.child('watchdone/'+todayISO()).set(sess).catch(()=>{});
+}
+
+function newSession(){
+  S = {id:new Date().toISOString().replace(/[:.]/g,'-').slice(0,19),
+       date:todayISO(), dayId:DAYS[dayIdx].id, dayLabel:DAYS[dayIdx].label,
+       t0:Date.now(), hrN:0, hrSum:0, maxHr:0, minHr:999, kcal:0,
+       zones:{1:0,2:0,3:0,4:0,5:0}, ibis:[], hrvOn:false,
+       spo2Start:null, spo2End:null, lastHrT:0};
+  $('hrPill').classList.add('on');
+  startSensors();
+}
+
+function weekChip(){
+  const st = K('f48w-startdate');
+  const chip = $('homeChip');
+  if(!st){ chip.textContent='Wk ? — tap to set start'; return; }
+  const diff = Math.floor((new Date().setHours(0,0,0,0)-new Date(st+'T00:00:00'))/86400000);
+  if(diff<0){ chip.textContent='Starts in '+(-diff)+'d'; return; }
+  const wk = Math.floor(diff/7)+1;
+  if(wk>16){ chip.textContent='Complete 🎉'; return; }
+  chip.classList.toggle('deload', wk===8||wk===12||wk===16);
+  chip.textContent = 'Week '+wk+' / 16'+(wk===8||wk===12?' · DELOAD':wk===16?' · LIGHT':'');
+}
+
+function renderHome(){
+  $('hrPill').classList.remove('on');
+  const d=DAYS[dayIdx];
+  $('homeDay').textContent=d.label;
+  $('homeTitle').textContent=d.title;
+  loadSess();
+  const p=sess[d.id], ct=p?p.done.length:0;
+  $('homeProg').textContent = ct? ct+' / '+d.ex.length+' done today':'';
+  $('resumeBtn').style.display = (ct>0&&ct<d.ex.length)?'':'none';
+  $('startBtn').textContent = ct>=d.ex.length?'Done ✓ (redo)':'Start ▶';
+  weekChip(); show('homeScr');
+}
+
+/* --- SpO2 spot flow (start + end of session) --- */
+let spo2Phase=null, spo2Timeout=null;
+function spo2Screen(phase){
+  spo2Phase=phase;
+  $('spo2Title').textContent = phase==='start'?'Blood oxygen · before':'Blood oxygen · after';
+  $('spo2Val').textContent='--';
+  $('spo2Hint').textContent='Hold your wrist still at heart height. Takes ~30s.';
+  $('spo2Go').style.display=''; show('spo2Scr');
+}
+function spo2Result(v,status){
+  clearTimeout(spo2Timeout);
+  if(v && v>=70 && v<=100){
+    $('spo2Val').textContent=Math.round(v)+'%';
+    if(S) S['spo2'+(spo2Phase==='start'?'Start':'End')]=Math.round(v);
+    buzz(120);
+    setTimeout(()=>spo2Done(), 1200);
+  }else{
+    $('spo2Val').textContent='✗';
+    $('spo2Hint').textContent='Reading failed — keep still and retry, or skip.';
+    $('spo2Go').style.display='';
+  }
+}
+function spo2Done(){
+  if(spo2Phase==='start'){ exIdx=0; setDone=0; renderEx(); }
+  else finalizeSession();
+}
+$('spo2Go').onclick=()=>{
+  $('spo2Go').style.display='none';
+  $('spo2Hint').textContent='Measuring… stay still.';
+  const n=NATIVE();
+  if(n && n.measureSpo2){ try{ n.measureSpo2(); }catch(_){ spo2Result(null); } }
+  else if(SIM){ setTimeout(()=>spo2Result(96+Math.round(Math.random()*2),0), 2500); }
+  else spo2Result(null);
+  spo2Timeout=setTimeout(()=>spo2Result(null), 45000);
+};
+$('spo2Skip').onclick=()=>spo2Done();
+
+/* --- exercise flow --- */
+function isCooldown(e){ return /slow breathing/i.test(e.n); }
+function renderEx(){
+  const d=DAYS[dayIdx], e=d.ex[exIdx];
+  if(S) S.hrvOn = isCooldown(e);
+  $('exCount').textContent=(exIdx+1)+' / '+d.ex.length;
+  $('exName').textContent=e.n;
+  $('exRx').textContent=e.rx;
+  const cue=$('exCue'); cue.textContent=e.c; cue.classList.remove('open');
+  const n=setsOf(e.rx);
+  $('exSets').innerHTML=Array.from({length:n},(_,i)=>'<i class="'+(i<setDone?'on':'')+'"></i>').join('');
+  const w=workSecs(e.rx);
+  $('exMain').textContent = w?('▶ '+(w>=120?Math.round(w/60)+' min':w+'s')):'✓ Set done';
+  $('exMain').className='btn'+(w?' grn':'');
+  show('exScr');
+}
+let tInt=null,tLeft=0;
+function stopT(){ clearInterval(tInt); tInt=null; }
+function runWork(secs){
+  const e=DAYS[dayIdx].ex[exIdx];
+  $('workName').textContent=e.n;
+  $('workHint').textContent = (S&&S.hrvOn)?'measuring HRV — lie still':'work — tap to stop';
+  tLeft=secs; $('workClock').textContent=fmt(tLeft);
+  $('workClock').classList.remove('warn');
+  show('workScr'); buzz(80); stopT();
+  tInt=setInterval(()=>{
+    tLeft--; $('workClock').textContent=fmt(Math.max(tLeft,0));
+    if(tLeft<=5&&tLeft>0){ $('workClock').classList.add('warn'); beep(660,.15); }
+    if(tLeft<=0){ stopT(); beep(880,.6); buzz([200,100,200]); completeSet(); }
+  },1000);
+}
+function runRest(){
+  const d=DAYS[dayIdx];
+  $('restNext').textContent = setDone<setsOf(d.ex[exIdx].rx)
+    ? 'next: set '+(setDone+1)+' — '+d.ex[exIdx].n
+    : (exIdx+1<d.ex.length?'next: '+d.ex[exIdx+1].n:'last one — finish!');
+  tLeft=REST; $('restClock').textContent=fmt(tLeft);
+  show('restScr'); stopT();
+  tInt=setInterval(()=>{
+    tLeft--; $('restClock').textContent=fmt(Math.max(tLeft,0));
+    if(tLeft<=0){ stopT(); beep(880,.5); buzz([150,80,150]); advanceAfterRest(); }
+  },1000);
+}
+function completeSet(){
+  setDone++; buzz(120);
+  if(setDone>=setsOf(DAYS[dayIdx].ex[exIdx].rx)) markExDone(); else runRest();
+}
+function advanceAfterRest(){
+  if(setDone>=setsOf(DAYS[dayIdx].ex[exIdx].rx)) nextEx(); else renderEx();
+}
+function markExDone(){
+  const d=DAYS[dayIdx];
+  loadSess();
+  sess[d.id]=sess[d.id]||{done:[]};
+  if(!sess[d.id].done.includes(exIdx)) sess[d.id].done.push(exIdx);
+  saveSess();
+  if(exIdx+1<d.ex.length) runRest(); else endSession();
+}
+function nextEx(){
+  if(exIdx+1<DAYS[dayIdx].ex.length){ exIdx++; setDone=0; renderEx(); }
+  else endSession();
+}
+function prevEx(){ if(exIdx>0){ exIdx--; setDone=0; stopT(); renderEx(); } }
+
+/* --- finish: end SpO2 → summary --- */
+function endSession(){ stopT(); if(S) spo2Screen('end'); else finalizeSession(); }
+
+function rmssd(ibis){
+  if(ibis.length<20) return null;
+  let s=0,n=0;
+  for(let i=1;i<ibis.length;i++){ const d=ibis[i]-ibis[i-1]; s+=d*d; n++; }
+  return Math.sqrt(s/n);
+}
+function hrvScore(r){ // ln(rmssd) mapped ~0–100
+  if(r==null) return null;
+  return Math.max(0, Math.min(100, Math.round((Math.log(r)-2.3)/(4.6-2.3)*100)));
+}
+function allSessions(){
+  try{ return JSON.parse(K('f48-sessions'))||[]; }catch(_){ return []; }
+}
+function finalizeSession(){
+  stopSensors();
+  $('hrPill').classList.remove('on');
+  if(!S){ renderHome(); return; }
+  const d=DAYS[dayIdx];
+  loadSess();
+  const doneCt=(sess[d.id]&&sess[d.id].done.length)||0;
+  const r=rmssd(S.ibis);
+  const rec={
+    id:S.id, date:S.date, dayId:S.dayId, dayLabel:S.dayLabel,
+    durMin:Math.round((Date.now()-S.t0)/60000),
+    exDone:doneCt, exTotal:d.ex.length,
+    avgHr:S.hrN?Math.round(S.hrSum/S.hrN):null,
+    maxHr:S.hrN?S.maxHr:null, minHr:S.hrN?S.minHr:null,
+    kcal:Math.round(S.kcal),
+    zones:{z1:Math.round(S.zones[1]),z2:Math.round(S.zones[2]),z3:Math.round(S.zones[3]),z4:Math.round(S.zones[4]),z5:Math.round(S.zones[5])},
+    spo2Start:S.spo2Start, spo2End:S.spo2End,
+    hrvRmssd:r?Math.round(r):null, hrvScore:hrvScore(r),
+    vo2Est:Math.round(15.3*hrMax()/PROFILE.restingHr*10)/10,
+    src:'watch'
+  };
+  const hist=allSessions(); hist.push(rec);
+  KS('f48-sessions', JSON.stringify(hist.slice(-200)));
+  if(RB) RB.child('sessions/'+rec.id).set(rec).catch(()=>{});
+  renderSummary(rec);
+  S=null;
+  buzz([200,100,200,100,400]);
+}
+function zbarHTML(z){
+  const tot=Math.max(1,z.z1+z.z2+z.z3+z.z4+z.z5);
+  return '<div class="zbar">'+[1,2,3,4,5].map(i=>
+    '<i style="width:'+(z['z'+i]/tot*100)+'%;background:'+ZC[i]+'"></i>').join('')+'</div>';
+}
+function renderSummary(r){
+  const rows=[
+    ['Exercises', r.exDone+' / '+r.exTotal+' · '+r.durMin+' min'],
+    ['Avg / Max HR', (r.avgHr??'--')+' / '+(r.maxHr??'--')+' bpm'],
+    ['Calories (est.)', r.kcal+' kcal'],
+    ['SpO₂ before → after', (r.spo2Start??'--')+'% → '+(r.spo2End??'--')+'%'],
+    ['HRV RMSSD', r.hrvRmssd? r.hrvRmssd+' ms · score '+r.hrvScore:'-- (needs still cooldown)'],
+    ['VO₂max (est. trend)', r.vo2Est+' ml/kg/min']
+  ];
+  $('sumBody').innerHTML =
+    '<div class="mid" style="margin-bottom:.3rem">'+r.dayLabel+' · '+r.date+'</div>'
+    + zbarHTML(r.zones)
+    + '<div class="dimtx" style="margin:.15rem 0 .3rem">time in zones Z1–Z5</div>'
+    + rows.map(x=>'<div class="stat"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>').join('');
+  show('sumScr');
+}
+function renderHist(){
+  const hist=allSessions().slice().sort((a,b)=>b.id.localeCompare(a.id)).slice(0,20);
+  $('histBody').innerHTML = hist.length? hist.map(r=>
+    '<div class="sess"><b>'+r.date+' · '+r.dayLabel+'</b>'
+    +(r.avgHr?('♥ '+r.avgHr+' avg / '+r.maxHr+' max · '):'')+r.kcal+' kcal · '+r.durMin+' min'
+    +(r.hrvScore!=null?(' · HRV '+r.hrvScore):'')+'</div>').join('')
+    : '<div class="dimtx">No sessions yet.</div>';
+  show('histScr');
+}
+if(RB) RB.child('sessions').on('value', s=>{
+  const v=s.val(); if(!v) return;
+  const local=allSessions(), ids=new Set(local.map(x=>x.id));
+  let ch=false;
+  Object.values(v).forEach(r=>{ if(!ids.has(r.id)){ local.push(r); ch=true; } });
+  if(ch) KS('f48-sessions', JSON.stringify(local.slice(-200)));
+});
+
+/* ================= wiring ================= */
+$('dayPrev').onclick=()=>{ dayIdx=(dayIdx+6)%7; renderHome(); };
+$('dayNext').onclick=()=>{ dayIdx=(dayIdx+1)%7; renderHome(); };
+$('homeChip').onclick=()=>{
+  const p=$('startPick'); p.value=K('f48w-startdate')||'';
+  try{ p.showPicker?p.showPicker():p.click(); }catch(_){ p.click(); }
+};
+$('startPick').onchange=()=>{
+  const v=$('startPick').value; if(!v) return;
+  KS('f48w-startdate',v); if(RB) RB.child('start').set(v).catch(()=>{});
+  weekChip();
+};
+$('startBtn').onclick=()=>{ newSession(); spo2Screen('start'); };
+$('resumeBtn').onclick=()=>{
+  const d=DAYS[dayIdx]; loadSess();
+  const done=(sess[d.id]&&sess[d.id].done)||[];
+  exIdx=0; while(exIdx<d.ex.length&&done.includes(exIdx)) exIdx++;
+  if(exIdx>=d.ex.length) exIdx=d.ex.length-1;
+  setDone=0; newSession(); renderEx();
+};
+$('histBtn').onclick=renderHist;
+$('histHome').onclick=renderHome;
+$('exMain').onclick=()=>{
+  const w=workSecs(DAYS[dayIdx].ex[exIdx].rx);
+  if(w) runWork(w); else completeSet();
+};
+$('exSkip').onclick=nextEx;
+$('exNext').onclick=nextEx;
+$('exPrev').onclick=prevEx;
+$('exCue').onclick=e=>e.target.classList.toggle('open');
+$('workScr').onclick=()=>{ stopT(); renderEx(); };
+$('restSkip').onclick=()=>{ stopT(); advanceAfterRest(); };
+$('sumHome').onclick=renderHome;
+
+let wl=null;
+async function wake(){ try{ wl=await navigator.wakeLock.request('screen'); }catch(_){} }
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') wake(); });
+wake();
+renderHome();
+</script>
+</body>
+</html>
