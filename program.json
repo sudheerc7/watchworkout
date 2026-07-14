@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "days": [
+    {"id":"mon","label":"Monday","title":"Lower Body","ex":[
+      {"n":"March in place","rx":"60s","c":"Easy pace, arms swinging."},
+      {"n":"Cat-Cow","rx":"8 reps","c":"Hands and knees, move with the breath."},
+      {"n":"Arm + hip circles","rx":"10 each way","c":"Shoulders, hips, ankles."},
+      {"n":"Chair sit-to-stand","rx":"4x10-15","c":"3s down, knees over toes. Hardest clean version."},
+      {"n":"Glute bridge","rx":"4x12-15","c":"Squeeze 2-3s at top, ribs down."},
+      {"n":"Band Romanian deadlift","rx":"3x12-15","c":"Flat-back hinge, hips drive forward."},
+      {"n":"Supported step-up","rx":"3x8-10/side","c":"Hand on rail, top heel drives, lower slow."},
+      {"n":"Hip flexor stretch","rx":"2x30s/side","c":"Chair support, tuck tailbone, shift forward."},
+      {"n":"Knee-to-wall rocks","rx":"2x10/side","c":"Foot flat, knee toward wall."},
+      {"n":"Calf raises","rx":"3x15","c":"3s down. Wk5+ single-leg."},
+      {"n":"Side-lying leg lift","rx":"3x12/side","c":"Lift slow to hip height."},
+      {"n":"Slow breathing","rx":"3 min","c":"In 4, out 6-8. HRV is measured here - lie still."}
+    ]},
+    {"id":"tue","label":"Tuesday","title":"Posture + Pull","ex":[
+      {"n":"March in place","rx":"60s","c":"Easy pace."},
+      {"n":"Cat-Cow","rx":"8 reps","c":"Move with the breath."},
+      {"n":"Arm + hip circles","rx":"10 each way","c":"Shoulders, hips, ankles."},
+      {"n":"Wall angels","rx":"3x8","c":"Back and head on wall, keep contact."},
+      {"n":"Chin tucks","rx":"2x10","c":"Glide head back, hold 3s."},
+      {"n":"Band bent-over row","rx":"4x10-15","c":"Flat back, squeeze blades 2s."},
+      {"n":"Band lat pulldown","rx":"4x10-15","c":"Half-kneeling, elbows to ribs, squeeze 2s."},
+      {"n":"Band pull-apart","rx":"3x15-20","c":"Arms straight, squeeze between blades."},
+      {"n":"Farmer carry","rx":"3x45-60s","c":"Heavy bags, walk tall. Heavy by last 15s."},
+      {"n":"Towel wring","rx":"2x10 each way","c":"Twist hard both directions."},
+      {"n":"Slow breathing","rx":"3 min","c":"In 4, out 6-8. HRV is measured here - lie still."}
+    ]},
+    {"id":"wed","label":"Wednesday","title":"Active Recovery","ex":[
+      {"n":"Easy walk","rx":"20-30 min","c":"Conversational pace."},
+      {"n":"Cat-Cow + Child's pose","rx":"5 min","c":"Gentle spine movement, then breathe."},
+      {"n":"Legs-up-the-wall","rx":"10 min","c":"Evening. Lower-back decompression."}
+    ]},
+    {"id":"thu","label":"Thursday","title":"Push + Core","ex":[
+      {"n":"March in place","rx":"60s","c":"Easy pace."},
+      {"n":"Cat-Cow","rx":"8 reps","c":"Move with the breath."},
+      {"n":"Arm + hip circles","rx":"10 each way","c":"Shoulders, hips, ankles."},
+      {"n":"Push-up (your level)","rx":"4x8-15","c":"Straight line, elbows ~45 deg. Hardest level you own."},
+      {"n":"Band chest press","rx":"4x10-15","c":"Anchored behind, press and squeeze 1s."},
+      {"n":"Dead bug","rx":"3x10/side","c":"Lower back pressed down, slow."},
+      {"n":"Bird dog","rx":"3x10/side","c":"Opposite arm+leg, back still."},
+      {"n":"Band Pallof press","rx":"3x10/side","c":"Press out, refuse the twist."},
+      {"n":"Knee side plank","rx":"3x20-40s/side","c":"Hips lifted in one line."},
+      {"n":"Forearm plank","rx":"3x max hold","c":"Stop 2s before form breaks."},
+      {"n":"Slow breathing","rx":"3 min","c":"In 4, out 6-8. HRV is measured here - lie still."}
+    ]},
+    {"id":"fri","label":"Friday","title":"Full Body circuit","ex":[
+      {"n":"March in place","rx":"60s","c":"Easy pace."},
+      {"n":"Cat-Cow","rx":"8 reps","c":"Move with the breath."},
+      {"n":"Sit-to-stand","rx":"3x12","c":"Smooth and quiet."},
+      {"n":"Band row","rx":"3x12","c":"Flat back, squeeze 2s."},
+      {"n":"Push-up (your level)","rx":"3x10","c":"Whichever level you've earned."},
+      {"n":"Band Romanian deadlift","rx":"3x12","c":"Hips do the work."},
+      {"n":"Glute bridge march","rx":"3x8/side","c":"Hold bridge, lift one foot then other."},
+      {"n":"Suitcase carry","rx":"3x40s/side","c":"One heavy bag, perfectly upright."},
+      {"n":"Brisk walk","rx":"8-10 min","c":"Faster than Wednesday."},
+      {"n":"Slow breathing","rx":"3 min","c":"In 4, out 6-8. HRV is measured here - lie still."}
+    ]},
+    {"id":"sat","label":"Saturday","title":"Flexibility Flow","ex":[
+      {"n":"Cat-Cow","rx":"10 reps","c":"Spine warm-up first."},
+      {"n":"90/90 hip stretch","rx":"2x45s/side","c":"Sit tall, cushion if needed."},
+      {"n":"Low lunge opener","rx":"2x40s/side","c":"Cushion under back knee, sink forward."},
+      {"n":"Hamstring strap stretch","rx":"2x40s/side","c":"Towel around foot, mild stretch."},
+      {"n":"Thread the needle","rx":"2x30s/side","c":"Slide one arm under."},
+      {"n":"Knee-to-wall rocks","rx":"2x10/side","c":"Second ankle dose."},
+      {"n":"Slow breathing","rx":"3 min","c":"Child's pose. HRV is measured here - be still."}
+    ]},
+    {"id":"sun","label":"Sunday","title":"Full Rest","ex":[
+      {"n":"Optional easy walk","rx":"20 min","c":"Only if you feel like it."},
+      {"n":"Weekly joint check","rx":"2 min","c":"Knees, back, shoulders, wrists /10."},
+      {"n":"Every 2nd Sun: measure","rx":"5 min","c":"Enter the five metrics in the browser app."}
+    ]}
+  ]
+}
