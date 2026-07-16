@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Foundation 48 · v4 — Mobility First · Watch Sync</title>
+<style>
+  :root{
+    --ink:#0f1c16;          /* deep curry-leaf green */
+    --card:#17261e;
+    --card2:#1d2f25;
+    --line:#2a4033;
+    --cream:#f3eddc;        /* rice cream */
+    --dim:#a9b8a9;
+    --turmeric:#e8a63c;     /* accent */
+    --turmeric-soft:#3a2f1a;
+    --leaf:#7fbf8e;
+    --chili:#e06a4f;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--ink);color:var(--cream);
+    font-family:-apple-system,'Segoe UI',Roboto,'Noto Sans',sans-serif;
+    -webkit-font-smoothing:antialiased}
+  body{max-width:560px;margin:0 auto;padding:14px 14px 90px}
+
+  header{padding:10px 2px 14px}
+  .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--turmeric)}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
+  h1 span{color:var(--leaf);font-weight:600}
+  .sub{color:var(--dim);font-size:13px;margin-top:6px;line-height:1.5}
+
+  /* wake lock lamp */
+  .lamp{display:flex;align-items:center;gap:12px;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin:14px 0}
+  .lamp .flame{width:34px;height:34px;flex:0 0 34px;border-radius:50%;
+    background:radial-gradient(circle at 50% 60%, #6b5a33 0 40%, #33402f 70%);
+    display:flex;align-items:center;justify-content:center;font-size:17px;filter:grayscale(1);transition:.3s}
+  .lamp.on .flame{background:radial-gradient(circle at 50% 62%, var(--turmeric) 0 42%, #7a5218 75%, #33402f);
+    filter:none;box-shadow:0 0 18px rgba(232,166,60,.45)}
+  .lamp .txt{flex:1}
+  .lamp .txt b{font-size:14px;display:block}
+  .lamp .txt small{color:var(--dim);font-size:11.5px;line-height:1.4;display:block;margin-top:2px}
+  .lamp button{background:var(--turmeric);color:#1c1608;border:0;border-radius:999px;
+    padding:9px 16px;font-weight:700;font-size:13px}
+  .lamp.on button{background:transparent;color:var(--turmeric);border:1px solid var(--turmeric)}
+
+  /* tabs */
+  nav{position:fixed;left:0;right:0;bottom:0;background:rgba(15,28,22,.96);
+    border-top:1px solid var(--line);backdrop-filter:blur(8px);z-index:20}
+  .navin{max-width:560px;margin:0 auto;display:flex}
+  nav button{flex:1;background:none;border:0;color:var(--dim);font-size:11px;
+    padding:10px 2px calc(10px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:3px;align-items:center}
+  nav button .ic{font-size:17px}
+  nav button.act{color:var(--turmeric)}
+
+  section{display:none}
+  section.act{display:block;animation:fade .25s}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
+
+  /* day pills */
+  .pills{display:flex;gap:7px;overflow-x:auto;padding:4px 0 12px;-webkit-overflow-scrolling:touch}
+  .pills::-webkit-scrollbar{display:none}
+  .pill{flex:0 0 auto;background:var(--card);border:1px solid var(--line);color:var(--dim);
+    border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:600}
+  .pill.act{background:var(--turmeric);border-color:var(--turmeric);color:#1c1608}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px;margin-bottom:12px}
+  .card h3{font-size:15px;margin-bottom:2px}
+  .card .meta{color:var(--dim);font-size:12px;margin-bottom:10px}
+  .blockname{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--leaf);
+    margin:14px 0 8px}
+  .ex{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line);align-items:flex-start}
+  .ex:first-of-type{border-top:0}
+  .ex input[type=checkbox]{width:20px;height:20px;accent-color:var(--turmeric);margin-top:2px;flex:0 0 20px}
+  .ex .body{flex:1}
+  .ex .nm{font-size:14px;font-weight:650}
+  .ex .rx{color:var(--turmeric);font-size:12.5px;font-weight:600;margin-left:6px}
+  .ex .cue{color:var(--dim);font-size:12.5px;line-height:1.45;margin-top:3px}
+  .ex .prog{color:var(--leaf);font-size:11.5px;margin-top:4px;line-height:1.4}
+  .ex a.vid{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:12px;
+    color:var(--turmeric);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+  .done .nm{opacity:.45;text-decoration:line-through}
+  .done .cue,.done .prog{opacity:.4}
+
+  /* rest timer */
+  .timer{position:sticky;top:8px;z-index:15;background:var(--card2);border:1px solid var(--line);
+    border-radius:var(--radius);padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .timer .clock{font-variant-numeric:tabular-nums;font-size:22px;font-weight:800;min-width:64px}
+  .timer .tlabel{flex-basis:100%;font-size:11.5px;color:var(--dim)}
+  .timer .tlabel:empty{display:none}
+  .timer.prep .clock{color:var(--turmeric)}
+  .ex button.extimer{display:inline-flex;align-items:center;gap:5px;margin-top:6px;margin-right:6px;font-size:12px;
+    color:var(--leaf);background:none;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-weight:600}
+  .startcard{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .startcard input[type=date]{background:var(--ink);border:1px solid var(--line);color:var(--cream);
+    border-radius:8px;padding:8px;font-size:13px;color-scheme:dark}
+  .chip{display:inline-block;background:var(--card2);border:1px solid var(--line);color:var(--leaf);
+    border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700}
+  .chip.deload{color:var(--turmeric);border-color:var(--turmeric)}
+  .resets{display:flex;gap:8px;margin:4px 0 12px}
+  .resets button{flex:1;background:var(--card);border:1px solid var(--line);color:var(--dim);
+    border-radius:10px;padding:9px;font-size:12px;font-weight:600}
+  .resets button.arm{border-color:var(--chili);color:var(--chili)}
+  .timer button{background:var(--card);border:1px solid var(--line);color:var(--cream);
+    border-radius:9px;padding:8px 11px;font-size:12.5px;font-weight:600}
+  .timer button.go{background:var(--leaf);border-color:var(--leaf);color:#10241a}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:8px 6px;border-top:1px solid var(--line);vertical-align:top;line-height:1.45}
+  th{color:var(--leaf);font-size:11px;text-transform:uppercase;letter-spacing:.08em;border-top:0}
+  td:first-child{color:var(--turmeric);font-weight:700;white-space:nowrap}
+
+  .note{background:var(--card2);border-left:3px solid var(--turmeric);border-radius:8px;
+    padding:10px 12px;font-size:12.5px;color:var(--dim);line-height:1.55;margin:10px 0}
+  .warn{border-left-color:var(--chili)}
+  .note b{color:var(--cream)}
+  ul.plain{list-style:none}
+  ul.plain li{padding:7px 0;border-top:1px solid var(--line);font-size:13px;line-height:1.5}
+  ul.plain li:first-child{border-top:0}
+  ul.plain li b{color:var(--turmeric)}
+
+  /* track */
+  .metric{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+  .metric:first-of-type{border-top:0}
+  .metric label{flex:1;font-size:13px}
+  .metric label small{display:block;color:var(--dim);font-size:11px;margin-top:2px}
+  .metric input{width:86px;background:var(--ink);border:1px solid var(--line);color:var(--cream);
+    border-radius:8px;padding:8px;font-size:14px;text-align:center}
+  .savebtn{width:100%;margin-top:12px;background:var(--turmeric);color:#1c1608;border:0;
+    border-radius:10px;padding:12px;font-weight:800;font-size:14px}
+  .saved{color:var(--leaf);font-size:12px;text-align:center;margin-top:8px;min-height:16px}
+
+  /* sync badge in header */
+  .syncbadge{position:absolute;top:12px;right:6px;font-size:10.5px;font-weight:700;
+    letter-spacing:.04em;color:var(--dim);background:var(--card);border:1px solid var(--line);
+    border-radius:999px;padding:4px 10px}
+  .syncbadge.on{color:var(--leaf);border-color:var(--leaf)}
+  .syncbadge.off{color:var(--chili);border-color:var(--chili)}
+  header{position:relative}
+
+  /* stats tab */
+  .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+  .statbox{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px}
+  .statbox .k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--leaf)}
+  .statbox .val{font-size:20px;font-weight:800;margin-top:3px}
+  .statbox .val small{font-size:11px;color:var(--dim);font-weight:600}
+  .zone{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px}
+  .zone .bar{flex:1;height:8px;border-radius:999px;background:var(--ink);overflow:hidden}
+  .zone .fill{height:100%;border-radius:999px}
+  .zn1{background:#6b8fb5}.zn2{background:var(--leaf)}.zn3{background:var(--turmeric)}
+  .zn4{background:#e08a4f}.zn5{background:var(--chili)}
+  .zlabel{width:74px;color:var(--dim)}
+  .zval{width:44px;text-align:right;color:var(--cream);font-weight:600}
+  .sesscard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 14px;margin-bottom:10px}
+  .sesshead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .sesshead .d{font-weight:800;font-size:14px;color:var(--turmeric)}
+  .sesshead .w{font-size:11.5px;color:var(--dim)}
+  .est{font-size:10.5px;color:var(--dim);font-style:italic;margin-top:6px}
+
+  /* sub-nav (Guide + Progress) */
+  .subnav{display:flex;gap:6px;margin-bottom:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:999px;padding:4px}
+  .subnav button{flex:1;background:none;border:0;color:var(--dim);font-size:12.5px;font-weight:700;
+    border-radius:999px;padding:8px 4px}
+  .subnav button.act{background:var(--turmeric);color:#1c1608}
+  .subpanel{display:none}
+  .subpanel.act{display:block;animation:fade .2s}
+
+  /* goal + trend rows */
+  .goalcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px;margin-bottom:12px}
+  .goalrow{padding:12px 0;border-top:1px solid var(--line)}
+  .goalrow:first-of-type{border-top:0}
+  .goalrow .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .goalrow .nm{font-size:14px;font-weight:700}
+  .goalrow .cur{font-size:13px;font-weight:800}
+  .goalrow .cur .u{font-size:11px;color:var(--dim);font-weight:600}
+  .trend{font-size:11.5px;font-weight:700;margin-top:3px}
+  .trend.up{color:var(--leaf)} .trend.down{color:var(--chili)} .trend.flat{color:var(--dim)}
+  .trend.good{color:var(--leaf)} .trend.bad{color:var(--chili)}
+  .prog-outer{height:7px;background:var(--ink);border-radius:999px;margin-top:8px;overflow:hidden}
+  .prog-inner{height:100%;background:var(--turmeric);border-radius:999px;transition:width .4s}
+  .prog-inner.done{background:var(--leaf)}
+  .goalmeta{font-size:11px;color:var(--dim);margin-top:5px}
+  .spark{margin-top:8px;width:100%;height:56px;display:block}
+  .spark .ln{fill:none;stroke:var(--turmeric);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+  .spark .dot{fill:var(--turmeric)}
+  .spark .goalline{stroke:var(--leaf);stroke-width:1;stroke-dasharray:3 3;opacity:.7}
+  .spark .zero{stroke:var(--line);stroke-width:1}
+
+  /* insight cards */
+  .insight{background:var(--card2);border-left:3px solid var(--leaf);border-radius:8px;
+    padding:11px 13px;margin-bottom:10px;font-size:12.5px;line-height:1.55}
+  .insight.warn{border-left-color:var(--chili)}
+  .insight.tip{border-left-color:var(--turmeric)}
+  .insight b{color:var(--cream)}
+  .insight .act{color:var(--turmeric);font-weight:700;display:block;margin-top:5px}
+  .goaledit{font-size:11.5px;color:var(--leaf);background:none;border:1px solid var(--line);
+    border-radius:999px;padding:4px 10px;font-weight:600}
+  .goalinput{width:70px;background:var(--ink);border:1px solid var(--line);color:var(--cream);
+    border-radius:6px;padding:5px;font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Foundation 48 · Version 4</div>
+  <h1>Mobility First <span>· built for 48</span></h1>
+  <div class="sub">Joint-friendly strength + flexibility over 16 weeks. 4 sessions/week (~25–30 min) + daily 10-min mobility + a daily step floor. No jumping, no floor crunches, no heavy loading — progress comes from control, range and earned progressions.</div>
+  <span class="syncbadge" id="syncBadge">● …</span>
+</header>
+
+<div class="lamp" id="lamp">
+  <div class="flame">🪔</div>
+  <div class="txt">
+    <b id="lampTitle">Screen stays awake: OFF</b>
+    <small id="lampSub">Tap to keep your phone screen on while you train. It releases automatically when you leave the app.</small>
+  </div>
+  <button id="lampBtn">Keep awake</button>
+</div>
+
+<div class="timer" id="timerBar">
+  <div class="clock" id="clock">0:00</div>
+  <button class="go" data-t="45">Rest 45s</button>
+  <button data-t="60">60s</button>
+  <button data-t="90">90s</button>
+  <button id="tstop">Stop</button>
+  <div class="tlabel" id="tlabel"></div>
+</div>
+
+<!-- ===================== WORKOUTS ===================== -->
+<section id="tab-workout" class="act">
+  <div class="card startcard">
+    <div style="flex:1;min-width:150px">
+      <b style="font-size:13.5px">Program start date</b>
+      <div style="color:var(--dim);font-size:11.5px;margin-top:2px">Pick the Monday you begin — the plan tracks your week &amp; phase from it.</div>
+    </div>
+    <input type="date" id="startDate">
+    <span class="chip" id="weekChip">Set a start date</span>
+  </div>
+  <div class="pills" id="dayPills"></div>
+  <div id="dayContent"></div>
+  <div class="resets">
+    <button id="resetDay">↺ Reset today's ticks</button>
+    <button id="resetWeek">↺↺ Reset entire week</button>
+  </div>
+  <div class="note warn"><b>Pain rule (non-negotiable):</b> muscle burn or next-day soreness is fine. Sharp pain, pinching, or any pain <b>inside a joint</b> (knee, shoulder, wrist, lower back) — stop that exercise, use the easier version listed, and if it repeats twice, drop it and tell me so we can swap it. This plan is guidance, not medical advice; check with your doctor if any joint issue persists.</div>
+  <div class="note"><b>Progression rule (how muscle actually gets built):</b> the week ranges on each exercise are guides, not commands. The real rule is <b>earn it</b> — when you hit the top of the rep range (or time) with clean form and quiet joints in <b>two sessions in a row</b>, move up: harder version, firmer band, or slower lowering. If you can't, stay where you are — that is the plan working, not failing.</div>
+</section>
+
+<!-- ===================== GUIDE (Phases + Diet + Recovery) ===================== -->
+<section id="tab-guide">
+  <div class="subnav" id="guideNav">
+    <button class="act" data-sub="phases">🪜 Phases</button>
+    <button data-sub="diet">🍛 Diet</button>
+    <button data-sub="recovery">🌙 Recovery</button>
+  </div>
+
+  <div class="subpanel act" id="sub-phases">
+  <div class="card">
+    <h3>Phase 1 · Foundation (Weeks 1–4)</h3>
+    <div class="meta">Learn the patterns · effort ~5–6/10</div>
+    <div class="cue" style="color:var(--dim);font-size:13px;line-height:1.55">Every rep slow and controlled. Use the easiest listed version of each exercise (wall push-ups, chair-assisted squats, knee planks). Stretches held 20–30s, never forced. The win here is showing up 4×/week and finishing pain-free.</div>
+  </div>
+  <div class="card">
+    <h3>Phase 2 · Build (Weeks 5–8)</h3>
+    <div class="meta">Add range &amp; light resistance · effort ~6–7/10</div>
+    <div class="cue" style="color:var(--dim);font-size:13px;line-height:1.55">Move to the middle progressions (incline push-ups, band rows with a firmer band, full sit-to-stands without hands). Stretch holds go to 30–45s. <b style="color:var(--turmeric)">Week 8 is a deload:</b> halve all sets, keep the daily mobility — joints and tendons at 48 adapt slower than muscles and need this week.</div>
+  </div>
+  <div class="card">
+    <h3>Phase 3 · Express (Weeks 9–12)</h3>
+    <div class="meta">Density &amp; earned progressions · effort ~7/10</div>
+    <div class="cue" style="color:var(--dim);font-size:13px;line-height:1.55">Shorter rests (45s), top-end progressions only if joints are quiet. Stretch holds 45–60s. <b style="color:var(--turmeric)">Week 12 is a deload:</b> halve all sets, keep the stretches, and re-test all five metrics in Track — this is your mid-program checkpoint.</div>
+  </div>
+  <div class="card">
+    <h3>Phase 4 · Consolidate (Weeks 13–16)</h3>
+    <div class="meta">Where the visible change lands · effort ~7/10</div>
+    <div class="cue" style="color:var(--dim);font-size:13px;line-height:1.55">Same movements, firmer bands, slower lowering (3s on everything), rests stay at 45–60s. By now the joints have had 12 weeks to adapt — these four weeks are where the chest, lats and abs you built actually become visible. <b style="color:var(--turmeric)">Week 16:</b> light week + final re-test of all five metrics. Then we design the next block together.</div>
+  </div>
+  <div class="note"><b>What changed from v1:</b> the handstand goal is parked — repeated wrist loading is the highest joint-risk item in the old plan. Its slot now goes to posture (wall angels, chin tucks) and shoulder health. We can bring wall-supported holds back after week 12 if your wrists and shoulders feel strong.</div>
+  <div class="note"><b>What changed in v3:</b> a lat pulldown was added on Tuesday (rows alone don&rsquo;t widen lats), a second chest press on Thursday (one pressing move a week was too little for a built chest), progressions are now earned by reps instead of the calendar, a daily 7–8k step floor drives the waist goal, and the program extends to 16 weeks — weeks 13–16 are where the muscle you built becomes visible.</div>
+  <div class="note"><b>Handstand — gated goal:</b> parked as an active move for joint safety, but re-introduced in stages. <b>From now:</b> wrist prep (see Tuesday) builds the tendons. <b>From week 8:</b> wall-supported holds, only if wrists and shoulders are quiet. The pain rule overrides everything — any wrist pinch and it regresses.</div>
+  <div class="note"><b>Leg split — flexibility goal:</b> not a separate exercise but the target the Saturday hip/hamstring work (90/90, low lunge, lying hamstring, hip flexor) builds toward. Progress shows up as your sit-and-reach and hip range improving. Never force the bottom of a split — let range come from the held stretches over weeks.</div>
+  </div>
+
+  <div class="subpanel" id="sub-diet">
+  <div class="card">
+    <h3>South Indian non-veg · 2 meals + 1 snack</h3>
+    <div class="meta">Target: ~100–110g protein/day · fist-sized rice portions · oil &amp; coconut in moderation</div>
+    <table>
+      <tr><th>Day</th><th>Meal 1 (~11 am)</th><th>Snack (~4:30 pm)</th><th>Meal 2 (~7:30 pm)</th></tr>
+      <tr><td>Mon</td><td>3-egg omelette + 2 ragi dosa + sambar + curd</td><td>Buttermilk + roasted peanuts (small handful)</td><td>Chicken curry (150–180g, home-style, less oil) + 1 cup rice + beans poriyal + rasam</td></tr>
+      <tr><td>Tue</td><td>Egg dosa (2) + tomato chutney + curd</td><td>Sundal (boiled chana with coconut)</td><td>Fish curry / meen kuzhambu (150g) + 1 cup rice + keerai (greens)</td></tr>
+      <tr><td>Wed</td><td>Idli (3) + sambar + 2 boiled eggs</td><td>Curd (1 cup) + 4–5 almonds</td><td>Egg curry (2 eggs) + 2 chapati + cabbage poriyal + salad</td></tr>
+      <tr><td>Thu</td><td>Pesarattu (2) + ginger chutney + curd</td><td>Buttermilk + sundal</td><td>Grilled/tawa chicken (180g) + curd rice (small) + veg salad</td></tr>
+      <tr><td>Fri</td><td>3-egg bhurji + 2 millet dosa + chutney</td><td>Boiled eggs (2) or curd</td><td>Fish fry (shallow, 150g) + 1 cup rice + rasam + poriyal</td></tr>
+      <tr><td>Sat</td><td>Upma with vegetables + 2 boiled eggs + curd</td><td>Peanut chikki (1 small) + buttermilk</td><td>Chicken chettinad (light oil, 180g) + 2 chapati + salad</td></tr>
+      <tr><td>Sun</td><td>Dosa (2) + egg curry + curd</td><td>Fruit + handful of nuts</td><td>Mutton curry (120g, occasional) or chicken + 1 cup rice + keerai + rasam</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h3>Simple rules that do 90% of the work</h3>
+    <ul class="plain">
+      <li><b>Protein anchor:</b> every meal has eggs, chicken, fish or thick curd. Roughly: 3 eggs ≈ 18g, 150g chicken ≈ 35–40g, 150g fish ≈ 28–32g, 1 cup curd ≈ 8g.</li>
+      <li><b>Rice discipline, not rice removal:</b> one loose fist of cooked rice per meal; swap to ragi/millet dosa or chapati on alternate days. Vegetables fill the rest of the plate.</li>
+      <li><b>Frying:</b> deep-fried items (chicken 65, bajji, vada) max once a week. Tawa, grill, curry and steam are the defaults.</li>
+      <li><b>Water:</b> 2.5–3 litres/day. Buttermilk counts, sweet tea/coffee doesn't — cap sugar at 2 tsp/day total.</li>
+      <li><b>Recovery foods:</b> curd (protein + gut), keerai/greens 3–4×/week (magnesium for muscles), turmeric + pepper in cooking as usual, fish 2×/week (omega-3 helps joints).</li>
+      <li><b>Optional shortcut:</b> if protein is falling short, one scoop of whey in milk as the snack closes the gap cleanly.</li>
+    </ul>
+  </div>
+  </div>
+
+  <div class="subpanel" id="sub-recovery">
+  <div class="card">
+    <h3>Recovery is a scheduled part of the plan</h3>
+    <ul class="plain">
+      <li><b>Built-in spacing:</b> no muscle group is trained hard on consecutive days. Wednesday and Sunday are protected recovery days — a 20–30 min easy walk is the only "training".</li>
+      <li><b>Deload weeks (8 &amp; 12) + light week 16:</b> halve every set count, keep all stretches. Tendons and joints at 48 recover on a 7–10 day cycle, not 48 hours — deloads are where they actually adapt.</li>
+      <li><b>Daily step floor — 7,000–8,000:</b> spread through the day, not one forced march. This is the single biggest lever on the waist number; the sessions build the muscle, the steps burn the cover off it.</li>
+      <li><b>Cooldown breathing (every session):</b> last 3 minutes — lie down, inhale 4 counts through the nose, exhale 6–8 counts. Long exhales switch the nervous system to recovery mode and measurably lower next-day stiffness.</li>
+      <li><b>Legs-up-the-wall (10 min):</b> evenings after Monday and Friday sessions. Lie on your back, legs resting up a wall. Drains the legs, decompresses the lower back. Feels like nothing, works like magic.</li>
+      <li><b>Warm water:</b> a warm bath or hot-water bag on the lower back on rest days if stiff. Heat before stretching, never force a cold muscle.</li>
+      <li><b>Sleep:</b> 7–8 hours is when muscle is actually built. If sleep was under 6 hours, do only the warm-up + stretches that day and skip the strength block — that's a smart day, not a lost day.</li>
+      <li><b>Weekly joint check (Sunday):</b> rate knees, lower back, shoulders, wrists out of 10. Anything at 3+ discomfort → next week use the easier progression for exercises touching that joint.</li>
+    </ul>
+  </div>
+  <div class="note"><b>Soreness guide:</b> dull muscle soreness 24–48h after a session = normal adaptation. Soreness lasting 3+ days = last session was too much; reduce one set from everything next time. Joint pain of any kind = never normal; regress immediately.</div>
+  </div>
+</section>
+
+<!-- ===================== PROGRESS (Track + Stats merged) ===================== -->
+<section id="tab-progress">
+  <div class="subnav" id="progNav">
+    <button class="act" data-sub="measure">✍️ Log</button>
+    <button data-sub="trends">📈 Trends</button>
+    <button data-sub="insights">💡 Insights</button>
+    <button data-sub="watch">⌚ Watch</button>
+  </div>
+
+  <!-- LOG -->
+  <div class="subpanel act" id="sub-measure">
+  <div class="card">
+    <h3>Measure weekly (Sunday morning)</h3>
+    <div class="meta">Log at the same time each Sunday — relaxed, after waking, before food. Consistency matters more than precision.</div>
+    <div class="metric"><label>Waist at navel<small>cm, relaxed, after waking</small></label><input id="m-waist" inputmode="decimal" placeholder="cm"></div>
+    <div class="metric"><label>Plank hold<small>seconds, forearms, good form</small></label><input id="m-plank" inputmode="numeric" placeholder="sec"></div>
+    <div class="metric"><label>Sit-and-reach<small>cm past (+) or before (−) toes</small></label><input id="m-reach" inputmode="decimal" placeholder="cm"></div>
+    <div class="metric"><label>Knee-to-wall<small>cm from wall, heel down — ankle mobility</small></label><input id="m-ankle" inputmode="decimal" placeholder="cm"></div>
+    <div class="metric"><label>Sit-to-stands in 30s<small>from a chair, no hands</small></label><input id="m-sts" inputmode="numeric" placeholder="reps"></div>
+    <button class="savebtn" id="saveMetrics">Save this week's numbers</button>
+    <div class="saved" id="saveMsg"></div>
+    <div id="history"></div>
+  </div>
+  </div>
+
+  <!-- TRENDS -->
+  <div class="subpanel" id="sub-trends">
+    <div class="goalcard">
+      <div class="top" style="display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0">Goals &amp; trends</h3>
+        <button class="goaledit" id="editGoals">Edit targets</button>
+      </div>
+      <div class="meta" style="margin-top:6px">Each metric vs the target you set. Dashed green line = goal.</div>
+    </div>
+    <div id="trendList"></div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div class="subpanel" id="sub-insights">
+    <div class="card"><h3>What your numbers are telling you</h3>
+      <div class="meta">Generated from your own logged data — direction, distance to goal, and what to do next.</div>
+    </div>
+    <div id="insightList"></div>
+  </div>
+
+  <!-- WATCH -->
+  <div class="subpanel" id="sub-watch">
+  <div class="card">
+    <h3>Your profile</h3>
+    <div class="meta">The watch uses these for calorie &amp; VO₂max estimates. Saved to the shared database.</div>
+    <div class="metric"><label>Resting heart rate<small>bpm, measured on waking</small></label><input id="p-rhr" inputmode="numeric" placeholder="65"></div>
+    <div class="metric"><label>Body weight<small>kg</small></label><input id="p-wt" inputmode="decimal" placeholder="75"></div>
+    <button class="savebtn" id="saveProfile">Save profile</button>
+    <div class="saved" id="profMsg"></div>
+  </div>
+  <div class="card">
+    <h3>Watch sessions</h3>
+    <div class="meta" id="statsSummary">Loading from the shared database…</div>
+    <div id="sessionList"></div>
+  </div>
+  <div class="note"><b>Where this comes from:</b> your Galaxy Watch writes each finished session to the shared database. This tab reads the same path the watch writes to. If sessions aren&rsquo;t showing, the diagnostic checklist tells you whether the gap is watch→database or database→browser.</div>
+  </div>
+</section>
+
+<nav><div class="navin">
+  <button data-tab="workout" class="act"><span class="ic">🏋️</span>Workout</button>
+  <button data-tab="guide"><span class="ic">📖</span>Guide</button>
+  <button data-tab="progress"><span class="ic">📈</span>Progress</button>
+</div></nav>
+
+<script>
+/* ============================================================
+   FIREBASE SYNC LAYER  (matches the Galaxy Watch app's Cloud object)
+   Path convention: <DB>/u/<TOKEN>/<key>.json   — REST, no SDK.
+   ============================================================ */
+const FB = {
+  db:    'https://foundationwatch-default-rtdb.asia-southeast1.firebasedatabase.app',
+  token: 'f48-4ab637ff2a8b946818b4bbd243a9017672cfa050'
+};
+const fbUrl = key => `${FB.db}/u/${FB.token}/${key}.json`;
+
+/* connection state → drives the badge in the header */
+let fbOnline = null;   // null = unknown, true/false after first call
+function setBadge(state){
+  fbOnline = state;
+  const el = document.getElementById('syncBadge');
+  if(!el) return;
+  if(state === true){ el.textContent='● Synced'; el.className='syncbadge on'; }
+  else if(state === false){ el.textContent='● Offline'; el.className='syncbadge off'; }
+  else { el.textContent='● …'; el.className='syncbadge'; }
+}
+
+async function fbGet(key){
+  try{
+    const r = await fetch(fbUrl(key), {cache:'no-store'});
+    if(!r.ok) throw new Error(r.status);
+    setBadge(true);
+    const j = await r.json();
+    return j;                       // parsed JSON value or null
+  }catch(e){ setBadge(false); return undefined; }   // undefined = fetch failed
+}
+async function fbPut(key, value){
+  try{
+    const r = await fetch(fbUrl(key), {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(value)
+    });
+    if(!r.ok) throw new Error(r.status);
+    setBadge(true); return true;
+  }catch(e){ setBadge(false); return false; }
+}
+
+/* ------------------------------------------------------------
+   Store: dual-backend wrapper. Writes to BOTH Firebase and
+   localStorage; reads Firebase first, falls back to local.
+   Keeps the original f48v2-* keys so all past data carries over.
+   Values are stored as strings (same shape the old code used).
+   ------------------------------------------------------------ */
+const Store = {
+  async get(key){
+    const remote = await fbGet(key);          // parsed value | null | undefined
+    if(remote !== undefined && remote !== null){
+      const val = (typeof remote === 'string') ? remote : JSON.stringify(remote);
+      try{ localStorage.setItem(key, val); }catch(_){}
+      return { value: val };
+    }
+    // remote missing or offline → local
+    try{ const v = localStorage.getItem(key); if(v!=null) return { value:v }; }catch(_){}
+    return null;
+  },
+  async set(key, val){
+    try{ localStorage.setItem(key, val); }catch(_){}
+    // store as raw string in Firebase for round-trip fidelity
+    await fbPut(key, val);
+    return { value: val };
+  }
+};
+
+/* ---------------- data ---------------- */
+const V = {
+  catcow:'https://www.youtube.com/watch?v=y_cKHKi9UaM',
+  birddog:'https://www.youtube.com/watch?v=ZdAHe9_HeEw',
+  deadbug:'https://www.youtube.com/watch?v=xtTIb6dC-vI',
+  bridge:'https://www.youtube.com/watch?v=BiSod_6ePqU',
+  ninety:'https://www.youtube.com/watch?v=t4Zz6-aG8Iw',
+  incline:'https://www.youtube.com/watch?v=49jfZ_z7-us',
+  wallpush:'https://www.youtube.com/shorts/ZUuYbRgcHmg',
+  bandrow:'https://www.youtube.com/watch?v=vR9KcvzLqVo',
+  ankle:'https://www.youtube.com/watch?v=ElrpduJn92Y',
+  angels:'https://www.youtube.com/watch?v=1UU4VvklQ44'
+};
+const yt = q => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
+
+const WARMUP = [
+  {n:'March in place', rx:'60s', cue:'Easy pace, arms swinging. Wakes hips and ankles.'},
+  {n:'Cat–Cow', rx:'8 slow reps', cue:'On hands and knees; move with the breath. Padding under knees.', v:V.catcow},
+  {n:'Arm + hip circles', rx:'10 each way', cue:'Shoulders, then standing hip circles, then ankle circles each side.'}
+];
+const COOLDOWN = [
+  {n:'Slow breathing, lying down', rx:'3 min', cue:'In 4 counts through the nose, out 6–8 counts. This is the recovery switch.'},
+  {n:'Gentle stretch of the day\u2019s muscles', rx:'2 min', cue:'Nothing forced — 20–30s easy holds.'}
+];
+
+const DAYS = [
+ {id:'mon', label:'Mon', title:'Lower Body · hips, knees, ankles', meta:'~28 min · strength through safe range',
+  main:[
+   {n:'Chair sit-to-stand', rx:'3×8–12', v:yt('sit to stand chair squat proper form'),
+    cue:'Stand from a chair slowly (3s down), knees tracking over toes, heels planted. The safest squat that exists.',
+    prog:'Wk1–4 hands on thighs · Wk5–8 arms crossed · Wk9–12 slower lowering, lighter touch on the chair'},
+   {n:'Glute bridge', rx:'3×12', v:V.bridge,
+    cue:'Squeeze glutes at the top for 2s, ribs down, no arching the lower back. Builds the muscles that protect your spine.',
+    prog:'Wk5+ pause 3s at top · Wk9+ single-leg assisted (other foot light on floor)'},
+   {n:'Supported split-stance hip flexor stretch', rx:'2×30s/side', v:yt('standing hip flexor stretch supported chair'),
+    cue:'Hold a chair, one leg back, tuck the tailbone, shift hips forward gently. Stretch in front of the back hip, never in the lower back.'},
+   {n:'Knee-to-wall ankle rocks', rx:'2×10/side', v:V.ankle,
+    cue:'Foot flat, drive the knee toward the wall over the toes. Directly unlocks squatting and stairs.',
+    prog:'Track the distance in cm — it\u2019s one of your five metrics'},
+   {n:'Supported calf raises', rx:'3×12', v:yt('calf raise supported wall proper form'),
+    cue:'Fingertips on the wall, rise slowly, 3s down. Strong calves = happy knees and ankles.'},
+   {n:'Side-lying leg lift', rx:'2×10/side', v:yt('side lying leg lift glute medius'),
+    cue:'Top leg straight, lift slowly to hip height. Hip stabilisers — the quiet fix for knee alignment.'}
+  ]},
+ {id:'tue', label:'Tue', title:'Posture + Pull · back, lats, forearms', meta:'~29 min · stand taller by Friday',
+  main:[
+   {n:'Wall angels', rx:'3×8', v:V.angels,
+    cue:'Back and head against the wall, slide arms up/down keeping contact. Hard at first — that difficulty IS the posture problem being fixed.',
+    prog:'Wk1–4 partial range is fine · goal by Wk12: full slide with wrists on the wall'},
+   {n:'Chin tucks', rx:'2×10', v:yt('chin tuck neck posture exercise'),
+    cue:'Glide the head straight back (double-chin), hold 3s. Undoes forward-head from desk work.'},
+   {n:'Band bent-over row', rx:'3×10–12', v:V.bandrow,
+    cue:'Hinge at the hips, flat back, pull elbows to the ribs, squeeze shoulder blades 2s. This builds the lats and mid-back you asked for.',
+    prog:'Wk1–4 light band · Wk5–8 firmer band · Wk9+ 3s slow release each rep'},
+   {n:'Band lat pulldown (half-kneeling)', rx:'3×10–12', v:yt('half kneeling band lat pulldown anchor door'),
+    cue:'Anchor the band high (door anchor or hook), kneel on a cushion, pull elbows down to the ribs and squeeze the armpit muscles 2s. The pulldown angle is what actually widens the lats — rows alone don\u2019t.',
+    prog:'Same earn-it rule: 12 clean reps twice in a row → firmer band or slower release'},
+   {n:'Band pull-apart', rx:'3×12', v:yt('band pull apart tutorial'),
+    cue:'Arms straight at chest height, stretch the band apart, squeeze between the shoulder blades.'},
+   {n:'Farmer carry (bags/buckets)', rx:'3×30–40s', v:yt('farmer carry proper form home'),
+    cue:'Two filled shopping bags or water cans, walk tall, shoulders back. Forearms, grip, core and posture in one move.',
+    prog:'Add water/weight when 40s feels easy'},
+   {n:'Towel wring', rx:'2×10 each way', v:yt('towel wring forearm exercise'),
+    cue:'Twist a rolled towel hard in both directions. Direct forearm work, zero joint stress.'},
+   {n:'Wrist prep (handstand base)', rx:'2×10 each', v:yt('wrist warm up mobility push up prep'),
+    cue:'On hands and knees: rock gently forward/back over the hands, then wrist circles, then fingertip-to-palm presses. Builds the wrist tendons for later wall holds. STOP at any pinch — this is prep, not loading.',
+    prog:'Wk1–7 mobility only · Wk8+ if wrists are quiet, add short wall-supported holds (feet walk up a wall, 10–15s) as the first handstand step'}
+  ]},
+ {id:'wed', label:'Wed', title:'Active Recovery', meta:'~25 min · protected — no strength work today',
+  main:[
+   {n:'Easy walk', rx:'20–30 min', cue:'Conversational pace, outdoors if possible. This is the fat-loss and recovery engine, not a filler.'},
+   {n:'Cat–Cow + Child\u2019s pose', rx:'5 min', v:V.catcow, cue:'Gentle spine movement, then sit back into child\u2019s pose and breathe.'},
+   {n:'Legs-up-the-wall', rx:'10 min (evening)', v:yt('legs up the wall pose benefits how to'), cue:'Optional but recommended — lower back decompression.'}
+  ]},
+ {id:'thu', label:'Thu', title:'Push + Core · chest, abs', meta:'~30 min · the abdomen work, done safely',
+  main:[
+   {n:'Wall → Incline push-up', rx:'3×8–12', v:V.wallpush,
+    cue:'Body in one straight line, elbows ~45° from ribs, chest to the surface. Chest and arms without wrist or shoulder strain.',
+    prog:'Wall → kitchen counter → sturdy table → firm sofa arm. Advance only by the earn-it rule (12 clean reps ×2 sessions), not the calendar', v2:V.incline},
+   {n:'Band chest press (standing)', rx:'3×10–12', v:yt('standing band chest press anchor behind'),
+    cue:'Band anchored behind you at chest height (or wrapped around the upper back), press forward and squeeze the chest 1s. Second chest movement — this is where the pressing volume for a built chest comes from, with zero wrist load.',
+    prog:'Earn-it rule: 12 clean reps twice → firmer band or 3s slow return'},
+   {n:'Dead bug', rx:'3×8/side', v:V.deadbug,
+    cue:'Lower back gently pressed to the floor the whole time; opposite arm and leg extend slowly. THE ab exercise for a 48-year-old spine — everything a crunch does, none of the neck/back cost.'},
+   {n:'Bird dog', rx:'3×8/side', v:V.birddog,
+    cue:'Opposite arm and leg reach out slowly; imagine a cup of water balanced on your lower back. Abs + lower-back protection together.'},
+   {n:'Knee side plank', rx:'2×15–25s/side', v:yt('side plank on knees tutorial'),
+    cue:'From knees, hips lifted in one line. The obliques that shape the waist.',
+    prog:'Wk9+ try full side plank for 10s if wrists/shoulders are quiet'},
+   {n:'Forearm plank', rx:'2× max hold', v:yt('forearm plank proper form beginner'),
+    cue:'On forearms (kind to wrists), knees down if needed. Squeeze glutes, don\u2019t let hips sag. Stop 2s before form breaks.',
+    prog:'Target: +10s every 2 weeks. This is a tracked metric.'}
+  ]},
+ {id:'fri', label:'Fri', title:'Full Body + Grip · circuit day', meta:'~28 min · 3 rounds, rest 60–90s between rounds',
+  main:[
+   {n:'Round: Chair sit-to-stand', rx:'×10', cue:'Same form as Monday — smooth and quiet.'},
+   {n:'Round: Band row', rx:'×10', v:V.bandrow, cue:'Flat back, squeeze 2s.'},
+   {n:'Round: Wall/incline push-up', rx:'×8', v:V.incline, cue:'Whichever level you\u2019re on this phase.'},
+   {n:'Round: Glute bridge march', rx:'×6/side', v:yt('glute bridge march tutorial'), cue:'Hold the bridge, slowly lift one foot then the other. Core + glutes, zero spine load.'},
+   {n:'Round: Suitcase carry', rx:'30s/side', v:yt('suitcase carry exercise tutorial'), cue:'One heavy bag, one side at a time, stay perfectly upright — obliques and grip.'},
+   {n:'Finisher: brisk walk', rx:'8–10 min', cue:'Slightly faster than Wednesday\u2019s pace.'}
+  ]},
+ {id:'sat', label:'Sat', title:'Flexibility Flow · the long stretch day', meta:'~30 min · this is where the flexibility goals are won',
+  main:[
+   {n:'Cat–Cow', rx:'10 slow reps', v:V.catcow, cue:'Spine warm-up first, always.'},
+   {n:'90/90 hip stretch', rx:'2×45s/side', v:V.ninety,
+    cue:'Sit tall with cushions under the hip if needed — the video shows the setup. Best single drill for hip rotation.',
+    prog:'Wk1–4 sit on a cushion · Wk9–12 gentle lean forward over the front shin'},
+   {n:'Low lunge hip opener', rx:'2×30–45s/side', v:yt('low lunge hip flexor stretch cushion under knee'),
+    cue:'Cushion under the back knee, tailbone tucked, sink forward gently.'},
+   {n:'Hamstring strap stretch (lying)', rx:'2×40s/side', v:yt('lying hamstring stretch with strap towel'),
+    cue:'On your back, towel around the foot, leg up until a mild stretch. Directly moves your sit-and-reach number.'},
+   {n:'Thread the needle', rx:'2×30s/side', v:yt('thread the needle stretch tutorial'),
+    cue:'From all fours, slide one arm under the body. Opens the mid-back — key for posture.'},
+   {n:'Knee-to-wall ankle rocks', rx:'2×10/side', v:V.ankle, cue:'Second dose of the week for the ankles.'},
+   {n:'Child\u2019s pose + breathing', rx:'3 min', v:yt('childs pose how to'), cue:'Finish here. Long exhales.'}
+  ]},
+ {id:'sun', label:'Sun', title:'Full Rest', meta:'recovery day · weekly measurement day',
+  main:[
+   {n:'Optional easy walk', rx:'20 min', cue:'Only if you feel like it.'},
+   {n:'Weekly joint check', rx:'2 min', cue:'Rate knees, lower back, shoulders, wrists /10 — anything at 3+ means easier versions next week.'},
+   {n:'Weekly: measure', rx:'5 min', cue:'Waist, plank, sit-and-reach, knee-to-wall, sit-to-stands — enter them in the Progress → Log tab. Weekly cadence now, so trends build faster.'}
+  ]}
+];
+
+/* -------------- render workouts -------------- */
+function rxSecs(rx){
+  let m;
+  if(m = rx.match(/(\d+)(?:[–-](\d+))?\s*min/)) return (m[2]?+m[2]:+m[1])*60;
+  if(m = rx.match(/(\d+)(?:[–-](\d+))?s/)) return m[2]?+m[2]:+m[1];
+  if(/max hold/.test(rx)) return 60;
+  if(m = rx.match(/×\s*(\d+)(?:[–-](\d+))?/)) return (m[2]?+m[2]:+m[1])*4;
+  if(m = rx.match(/(\d+)\s*(?:slow reps|each way)/)) return +m[1]*4;
+  return 45;
+}
+function fmtS(s){ return s>=120 ? Math.round(s/60)+' min' : s+'s'; }
+
+const pills = document.getElementById('dayPills');
+const content = document.getElementById('dayContent');
+let curDay = ['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()];
+let doneState = {};
+
+function exRow(e, dayId, idx, section){
+  const id = dayId+'-'+section+'-'+idx;
+  const checked = doneState[todayKey()] && doneState[todayKey()].includes(id);
+  const secs = rxSecs(e.rx);
+  return `<div class="ex ${checked?'done':''}" data-id="${id}">
+    <input type="checkbox" ${checked?'checked':''}>
+    <div class="body">
+      <span class="nm">${e.n}</span><span class="rx">${e.rx}</span>
+      <div class="cue">${e.cue}</div>
+      ${e.prog?`<div class="prog">↗ ${e.prog}</div>`:''}
+      <button class="extimer" data-secs="${secs}" data-nm="${e.n}">⏱ ${fmtS(secs)} +5s</button>
+      ${e.v?`<a class="vid" href="${e.v}" target="_blank" rel="noopener">▶ Watch how</a>`:''}
+      ${e.v2?`<a class="vid" href="${e.v2}" target="_blank" rel="noopener">▶ Incline version</a>`:''}
+    </div></div>`;
+}
+function renderDay(){
+  pills.innerHTML = DAYS.map(d=>`<button class="pill ${d.id===curDay?'act':''}" data-d="${d.id}">${d.label}</button>`).join('');
+  const d = DAYS.find(x=>x.id===curDay);
+  const rest = (d.id==='wed'||d.id==='sun');
+  content.innerHTML = `<div class="card">
+    <h3>${d.title}</h3><div class="meta">${d.meta}</div>
+    ${rest?'':'<div class="blockname">Warm-up · 5 min</div>'+WARMUP.map((e,i)=>exRow(e,d.id,i,'w')).join('')}
+    <div class="blockname">${rest?'Today':'Main block'}</div>
+    ${d.main.map((e,i)=>exRow(e,d.id,i,'m')).join('')}
+    ${rest?'':'<div class="blockname">Cooldown · 5 min</div>'+COOLDOWN.map((e,i)=>exRow(e,d.id,i,'c')).join('')}
+  </div>`;
+}
+function todayKey(){ return 'day-'+new Date().toISOString().slice(0,10); }
+
+pills.addEventListener('click', e=>{
+  const b = e.target.closest('.pill'); if(!b) return;
+  curDay = b.dataset.d; renderDay();
+});
+content.addEventListener('change', async e=>{
+  if(e.target.type!=='checkbox') return;
+  const row = e.target.closest('.ex'); const id = row.dataset.id;
+  row.classList.toggle('done', e.target.checked);
+  const k = todayKey();
+  doneState[k] = doneState[k]||[];
+  if(e.target.checked){ if(!doneState[k].includes(id)) doneState[k].push(id); }
+  else doneState[k] = doneState[k].filter(x=>x!==id);
+  try{ await Store.set('f48v2-done', JSON.stringify(doneState)); }catch(_){}
+});
+content.addEventListener('click', e=>{
+  const b = e.target.closest('.extimer'); if(!b) return;
+  startExTimer(+b.dataset.secs, b.dataset.nm);
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+
+/* -------------- reset progress -------------- */
+function isoOffset(base, off){ const d=new Date(base); d.setDate(d.getDate()+off); return 'day-'+d.toISOString().slice(0,10); }
+async function saveDone(){ try{ await Store.set('f48v2-done', JSON.stringify(doneState)); }catch(_){} }
+function armAndRun(btn, label, fn){
+  if(btn.classList.contains('arm')){ btn.classList.remove('arm'); btn.textContent=label; fn(); }
+  else{
+    btn.classList.add('arm'); btn.textContent='Tap again to confirm';
+    setTimeout(()=>{ btn.classList.remove('arm'); btn.textContent=label; }, 3500);
+  }
+}
+document.getElementById('resetDay').addEventListener('click', function(){
+  armAndRun(this, "↺ Reset today's ticks", async ()=>{
+    delete doneState[todayKey()]; await saveDone(); renderDay();
+  });
+});
+document.getElementById('resetWeek').addEventListener('click', function(){
+  armAndRun(this, '↺↺ Reset entire week', async ()=>{
+    const now = new Date();
+    const mondayOff = ((now.getDay()+6)%7);        // days since Monday
+    for(let i=0;i<7;i++) delete doneState[isoOffset(now, i-mondayOff)];
+    await saveDone(); renderDay();
+  });
+});
+
+/* -------------- start date / week & phase -------------- */
+const startInput = document.getElementById('startDate');
+const weekChip = document.getElementById('weekChip');
+function renderWeekChip(startStr){
+  if(!startStr){ weekChip.textContent='Set a start date'; weekChip.classList.remove('deload'); return; }
+  const start = new Date(startStr+'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.floor((today-start)/86400000);
+  weekChip.classList.remove('deload');
+  if(diff < 0){ weekChip.textContent = 'Starts in '+(-diff)+' day'+(diff===-1?'':'s'); return; }
+  const wk = Math.floor(diff/7)+1;
+  if(wk > 16){ weekChip.textContent = 'Program complete 🎉 — re-test & plan next block'; return; }
+  const phase = wk<=4 ? 'Phase 1 · Foundation' : wk<=8 ? 'Phase 2 · Build' : wk<=12 ? 'Phase 3 · Express' : 'Phase 4 · Consolidate';
+  let txt = 'Week '+wk+' of 16 · '+phase;
+  if(wk===8 || wk===12){ txt += ' · DELOAD — halve all sets'; weekChip.classList.add('deload'); }
+  if(wk===16){ txt += ' · LIGHT WEEK — final re-test'; weekChip.classList.add('deload'); }
+  weekChip.textContent = txt;
+}
+startInput.addEventListener('change', async ()=>{
+  renderWeekChip(startInput.value);
+  // write to 'start' (the key the watch reads) plus keep the legacy key for older data
+  try{ await Store.set('start', startInput.value); }catch(_){}
+  try{ await Store.set('f48v2-start', startInput.value); }catch(_){}
+});
+
+(async ()=>{
+  try{ const r = await Store.get('f48v2-done'); if(r) doneState = JSON.parse(r.value)||{}; }catch(_){}
+  try{
+    // prefer 'start' (shared with the watch); fall back to the legacy key
+    let s = await Store.get('start');
+    if(!s || !s.value) s = await Store.get('f48v2-start');
+    if(s && s.value){
+      const clean = String(s.value).replace(/^"|"$/g,'');   // tolerate a quoted value from the watch
+      startInput.value = clean; renderWeekChip(clean);
+    }
+  }catch(_){}
+  renderDay();
+})();
+
+/* -------------- tabs -------------- */
+document.querySelector('nav').addEventListener('click', e=>{
+  const b = e.target.closest('button[data-tab]'); if(!b) return;
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('act', x===b));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('act', s.id==='tab-'+b.dataset.tab));
+});
+
+/* -------------- wake lock -------------- */
+let wakeLock = null, wantAwake = false;
+const lamp = document.getElementById('lamp'), lampBtn = document.getElementById('lampBtn'),
+      lampTitle = document.getElementById('lampTitle'), lampSub = document.getElementById('lampSub');
+
+async function acquire(){
+  try{
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', ()=>{ if(!wantAwake) setLampUI(false); });
+    setLampUI(true);
+  }catch(err){
+    wantAwake = false;
+    setLampUI(false);
+    lampSub.textContent = 'Couldn\u2019t enable on this device/view. Workaround: Settings → Display → Screen timeout → 10 or 30 minutes while you train.';
+  }
+}
+function setLampUI(on){
+  lamp.classList.toggle('on', on);
+  lampTitle.textContent = 'Screen stays awake: ' + (on?'ON':'OFF');
+  lampBtn.textContent = on ? 'Turn off' : 'Keep awake';
+  if(on) lampSub.textContent = 'The lamp is lit — your screen will not sleep while this page is open and visible.';
+}
+lampBtn.addEventListener('click', async ()=>{
+  if(!('wakeLock' in navigator)){
+    lampSub.textContent = 'This browser doesn\u2019t support screen wake lock. Workaround: Settings → Display → Screen timeout → 10 or 30 minutes.';
+    return;
+  }
+  if(lamp.classList.contains('on')){
+    wantAwake = false;
+    try{ await wakeLock?.release(); }catch(_){}
+    wakeLock = null; setLampUI(false);
+    lampSub.textContent = 'Tap to keep your phone screen on while you train.';
+  }else{
+    wantAwake = true; acquire();
+  }
+});
+document.addEventListener('visibilitychange', ()=>{
+  if(wantAwake && document.visibilityState==='visible') acquire();
+});
+
+/* -------------- timer (rest + per-exercise) -------------- */
+let tLeft = 0, tWork = 0, tInt = null;
+const clock = document.getElementById('clock');
+const tlabel = document.getElementById('tlabel');
+const timerBar = document.getElementById('timerBar');
+function fmtClock(s){ const m=Math.floor(s/60); return m+':'+String(s%60).padStart(2,'0'); }
+function draw(){
+  const inPrep = tLeft > tWork;
+  timerBar.classList.toggle('prep', inPrep);
+  clock.textContent = inPrep ? 'Ready '+(tLeft-tWork) : fmtClock(tLeft);
+  clock.style.color = (!inPrep && tLeft>0 && tLeft<=5) ? 'var(--chili)' : '';
+}
+function beep(freq, dur){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = freq||880; g.gain.setValueAtTime(.25, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+(dur||.6));
+    o.start(); o.stop(ctx.currentTime+(dur||.6));
+  }catch(_){}
+}
+function runTimer(total, work, label){
+  clearInterval(tInt);
+  tLeft = total; tWork = work; tlabel.textContent = label||''; draw();
+  tInt = setInterval(()=>{
+    tLeft--;
+    if(tLeft === tWork && tWork < total) beep(660,.25);   // prep finished → go
+    draw();
+    if(tLeft<=0){ clearInterval(tInt); beep(880,.7); tlabel.textContent = label ? label+' — done ✓' : ''; }
+  },1000);
+}
+function startExTimer(secs, name){ runTimer(secs+5, secs, name+' · '+fmtS(secs)+' (+5s ready)'); }
+document.getElementById('timerBar').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.id==='tstop'){ clearInterval(tInt); tLeft=0; tWork=0; tlabel.textContent=''; draw(); return; }
+  if(b.dataset.t) runTimer(+b.dataset.t, +b.dataset.t, 'Rest');
+});
+draw();
+
+/* -------------- metrics -------------- */
+const fields = ['waist','plank','reach','ankle','sts'];
+const labels = {waist:'Waist', plank:'Plank', reach:'Reach', ankle:'Ankle', sts:'Sit-stands'};
+async function loadHistory(){
+  let hist = [];
+  try{ const r = await Store.get('f48v2-metrics'); if(r) hist = JSON.parse(r.value)||[]; }catch(_){}
+  const el = document.getElementById('history');
+  if(!hist.length){ el.innerHTML=''; return hist; }
+  el.innerHTML = '<div class="blockname" style="margin-top:16px">History</div><table><tr><th>Date</th>'+
+    fields.map(f=>'<th>'+labels[f]+'</th>').join('')+'</tr>'+
+    hist.slice(-8).reverse().map(h=>'<tr><td>'+h.date+'</td>'+fields.map(f=>'<td>'+(h[f]??'–')+'</td>').join('')+'</tr>').join('')+'</table>';
+  return hist;
+}
+document.getElementById('saveMetrics').addEventListener('click', async ()=>{
+  const entry = {date: new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short'})};
+  let any=false;
+  fields.forEach(f=>{ const v=document.getElementById('m-'+f).value.trim(); if(v){entry[f]=v; any=true;} });
+  const msg = document.getElementById('saveMsg');
+  if(!any){ msg.textContent='Enter at least one number first.'; return; }
+  try{
+    let hist=[]; try{ const r=await Store.get('f48v2-metrics'); if(r) hist=JSON.parse(r.value)||[]; }catch(_){}
+    hist.push(entry);
+    await Store.set('f48v2-metrics', JSON.stringify(hist));
+    msg.textContent='Saved ✓';
+    fields.forEach(f=>document.getElementById('m-'+f).value='');
+    loadHistory();
+  }catch(err){ msg.textContent='Could not save — storage unavailable.'; }
+});
+loadHistory();
+
+/* ============================================================
+   STATS TAB — profile + watch session dashboard
+   ============================================================ */
+const AGE = 48;
+
+/* profile: resting HR + weight, shared with the watch */
+async function loadProfile(){
+  const r = await Store.get('profile');
+  let p = {restingHr:65, weightKg:75};
+  if(r){ try{ p = Object.assign(p, JSON.parse(r.value)); }catch(_){} }
+  document.getElementById('p-rhr').value = p.restingHr;
+  document.getElementById('p-wt').value  = p.weightKg;
+  return p;
+}
+document.getElementById('saveProfile').addEventListener('click', async ()=>{
+  const rhr = parseFloat(document.getElementById('p-rhr').value)||65;
+  const wt  = parseFloat(document.getElementById('p-wt').value)||75;
+  const msg = document.getElementById('profMsg');
+  // path 'profile' + fields restingHr/weightKg — matches the watch's MainActivity read
+  const ok = await Store.set('profile', JSON.stringify({restingHr: rhr, weightKg: wt}));
+  msg.textContent = fbOnline ? 'Saved & synced ✓' : 'Saved locally (offline) ✓';
+});
+
+/* zone bar row */
+function zoneRow(n, label, secs, total){
+  const pct = total>0 ? Math.round(secs/total*100) : 0;
+  const mm = Math.floor(secs/60), ss = secs%60;
+  return `<div class="zone"><span class="zlabel">${label}</span>
+    <span class="bar"><span class="fill zn${n}" style="width:${pct}%"></span></span>
+    <span class="zval">${mm}:${String(ss).padStart(2,'0')}</span></div>`;
+}
+
+/* render one session record (defensive about missing fields) */
+function sessionCard(s){
+  const d = s.date || s.day || '—';
+  const wname = s.workout || s.dayName || '';
+  const avg = s.avgHr ?? s.hrAvg ?? '–';
+  const max = s.maxHr ?? s.hrMax ?? '–';
+  const kcal = s.calories ?? s.kcal ?? '–';
+  const vo2 = s.vo2max ?? s.vo2 ?? null;
+  const hrv = s.hrv ?? s.rmssd ?? null;
+  const spb = s.spo2Before ?? s.spo2_before ?? null;
+  const spa = s.spo2After ?? s.spo2_after ?? null;
+  const z = s.zones || {};
+  const ztotal = Object.values(z).reduce((a,b)=>a+(+b||0),0);
+  let zonesHtml = '';
+  if(ztotal>0){
+    zonesHtml = zoneRow(1,'Z1 easy', +z.z1||0, ztotal)
+              + zoneRow(2,'Z2 fat-burn', +z.z2||0, ztotal)
+              + zoneRow(3,'Z3 aerobic', +z.z3||0, ztotal)
+              + zoneRow(4,'Z4 hard', +z.z4||0, ztotal)
+              + zoneRow(5,'Z5 max', +z.z5||0, ztotal);
+  }
+  return `<div class="sesscard">
+    <div class="sesshead"><span class="d">${d}</span><span class="w">${wname}</span></div>
+    <div class="statgrid">
+      <div class="statbox"><div class="k">Avg HR</div><div class="val">${avg}<small> bpm</small></div></div>
+      <div class="statbox"><div class="k">Max HR</div><div class="val">${max}<small> bpm</small></div></div>
+      <div class="statbox"><div class="k">Calories</div><div class="val">${kcal}<small> kcal</small></div></div>
+      ${vo2!=null?`<div class="statbox"><div class="k">VO₂max</div><div class="val">${vo2}</div></div>`:''}
+      ${hrv!=null?`<div class="statbox"><div class="k">HRV</div><div class="val">${hrv}<small> ms</small></div></div>`:''}
+      ${(spb!=null||spa!=null)?`<div class="statbox"><div class="k">SpO₂ pre/post</div><div class="val">${spb??'–'}/${spa??'–'}<small> %</small></div></div>`:''}
+    </div>
+    ${zonesHtml?`<div style="margin-top:10px">${zonesHtml}</div>`:''}
+    <div class="est">All sensor-derived values are estimates.</div>
+  </div>`;
+}
+
+async function loadStats(){
+  const summary = document.getElementById('statsSummary');
+  const list = document.getElementById('sessionList');
+  const raw = await fbGet('sessions');   // read straight from the shared DB
+  if(raw === undefined){
+    summary.textContent = 'Can’t reach the shared database right now — check your connection.';
+    list.innerHTML = ''; return;
+  }
+  if(raw === null){
+    summary.textContent = 'Connected to the database, but no watch sessions found yet. Finish a session on the watch, then pull to refresh.';
+    list.innerHTML = ''; return;
+  }
+  // sessions may be an object keyed by id, or an array
+  let arr = Array.isArray(raw) ? raw.slice() : Object.values(raw);
+  arr = arr.filter(Boolean);
+  // sort newest first by date/timestamp if present
+  arr.sort((a,b)=>{
+    const ta = a.ts ?? Date.parse(a.date||'') ?? 0;
+    const tb = b.ts ?? Date.parse(b.date||'') ?? 0;
+    return tb - ta;
+  });
+  summary.textContent = arr.length + ' session' + (arr.length===1?'':'s') + ' from your watch:';
+  list.innerHTML = arr.map(sessionCard).join('');
+}
+
+/* ============================================================
+   SUB-NAV (Guide + Progress internal tabs)
+   ============================================================ */
+function wireSubnav(navId){
+  const nav = document.getElementById(navId); if(!nav) return;
+  nav.addEventListener('click', e=>{
+    const b = e.target.closest('button[data-sub]'); if(!b) return;
+    const sub = b.dataset.sub;
+    nav.querySelectorAll('button').forEach(x=>x.classList.toggle('act', x===b));
+    document.querySelectorAll('#'+ (navId==='guideNav'?'tab-guide':'tab-progress') +' .subpanel')
+      .forEach(p=>p.classList.toggle('act', p.id==='sub-'+sub));
+    if(sub==='trends') renderTrends();
+    if(sub==='insights') renderInsights();
+    if(sub==='watch') loadStats();
+  });
+}
+wireSubnav('guideNav');
+wireSubnav('progNav');
+
+/* ============================================================
+   GOALS  (editable targets)
+   dir: 'down' = lower is better, 'up' = higher is better
+   waist target is relative (−5 from first reading) → resolved at runtime
+   ============================================================ */
+const GOAL_DEFAULTS = {
+  waist:{label:'Waist', unit:'cm', dir:'down', rel:-5, target:null},
+  plank:{label:'Plank', unit:'s', dir:'up', target:90},
+  reach:{label:'Sit-and-reach', unit:'cm', dir:'up', target:5},
+  ankle:{label:'Knee-to-wall', unit:'cm', dir:'up', target:12},
+  sts:{label:'Sit-to-stands', unit:'reps', dir:'up', target:25}
+};
+let GOALS = JSON.parse(JSON.stringify(GOAL_DEFAULTS));
+async function loadGoals(){
+  const r = await Store.get('f48-goals');
+  if(r){ try{ const g=JSON.parse(r.value); for(const k in g){ if(GOALS[k]) GOALS[k].target=g[k]; } }catch(_){} }
+}
+async function saveGoals(){
+  const out={}; for(const k in GOALS) out[k]=GOALS[k].target;
+  await Store.set('f48-goals', JSON.stringify(out));
+}
+
+async function getHistory(){
+  let hist=[]; try{ const r=await Store.get('f48v2-metrics'); if(r) hist=JSON.parse(r.value)||[]; }catch(_){}
+  return hist;
+}
+// series of {i, v} for a field, in log order, numbers only
+function series(hist, f){
+  const out=[];
+  hist.forEach((h,i)=>{ const v=parseFloat(h[f]); if(!isNaN(v)) out.push({i, v, date:h.date}); });
+  return out;
+}
+// resolve waist absolute target from first logged waist
+function resolvedTarget(hist, key){
+  const g=GOALS[key];
+  if(g.rel!=null){
+    const s=series(hist,key);
+    if(!s.length) return null;
+    return +(s[0].v + g.rel).toFixed(1);
+  }
+  return g.target;
+}
+
+/* ---- SVG sparkline ---- */
+function sparkline(pts, goalVal, dir){
+  if(pts.length<1) return '<div class="goalmeta">No data yet — log a few weeks to see the trend.</div>';
+  const W=300,H=56,pad=6;
+  const vals=pts.map(p=>p.v).concat(goalVal!=null?[goalVal]:[]);
+  let mn=Math.min(...vals), mx=Math.max(...vals);
+  if(mn===mx){ mn-=1; mx+=1; }
+  const x=i=>pad + (pts.length===1?W/2:(i/(pts.length-1))*(W-2*pad));
+  const y=v=>H-pad-((v-mn)/(mx-mn))*(H-2*pad);
+  const d=pts.map((p,i)=>(i?'L':'M')+x(i).toFixed(1)+','+y(p.v).toFixed(1)).join(' ');
+  const dots=pts.map((p,i)=>`<circle class="dot" cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="2.5"/>`).join('');
+  const gl = goalVal!=null ? `<line class="goalline" x1="${pad}" y1="${y(goalVal).toFixed(1)}" x2="${W-pad}" y2="${y(goalVal).toFixed(1)}"/>` : '';
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${gl}<path class="ln" d="${d}"/>${dots}</svg>`;
+}
+
+/* ---- compute a trend summary for one metric ---- */
+function trendOf(pts, dir){
+  if(pts.length<2) return {dirWord:'—', delta:0, cls:'flat', enough:false};
+  const first=pts[0].v, last=pts[pts.length-1].v, delta=+(last-first).toFixed(1);
+  let improving;
+  if(delta===0) improving=null;
+  else improving = dir==='down' ? delta<0 : delta>0;
+  const cls = delta===0?'flat':(improving?'good':'bad');
+  const dirWord = delta===0?'flat':(delta>0?'up':'down');
+  return {dirWord, delta:Math.abs(delta), rawDelta:delta, cls, improving, enough:true, first, last};
+}
+
+/* ============================================================
+   TRENDS TAB
+   ============================================================ */
+async function renderTrends(){
+  const hist=await getHistory();
+  const el=document.getElementById('trendList');
+  const keys=['waist','plank','reach','ankle','sts'];
+  el.innerHTML = keys.map(k=>{
+    const g=GOALS[k];
+    const pts=series(hist,k);
+    const tgt=resolvedTarget(hist,k);
+    const cur=pts.length?pts[pts.length-1].v:null;
+    const t=trendOf(pts,g.dir);
+    // progress toward goal 0..100
+    let pct=0, done=false;
+    if(cur!=null && tgt!=null && pts.length){
+      const start=pts[0].v;
+      if(tgt!==start){ pct=Math.max(0,Math.min(100, Math.round((cur-start)/(tgt-start)*100))); }
+      done = g.dir==='down' ? cur<=tgt : cur>=tgt;
+      if(done) pct=100;
+    }
+    const trendTxt = !t.enough ? 'Log at least 2 weeks for a trend'
+      : t.rawDelta===0 ? 'Flat since you started'
+      : `${t.dirWord==='up'?'▲':'▼'} ${t.delta}${g.unit} since start (${t.improving?'toward goal':'away from goal'})`;
+    const distTxt = (cur!=null&&tgt!=null)
+      ? (done ? '🎯 Goal reached' : `${Math.abs(+(tgt-cur).toFixed(1))}${g.unit} to go (target ${tgt}${g.unit})`)
+      : (tgt!=null?`Target ${tgt}${g.unit}`:'Set a start reading');
+    return `<div class="goalcard"><div class="goalrow" style="border:0;padding:0">
+      <div class="top"><span class="nm">${g.label}</span>
+        <span class="cur">${cur!=null?cur:'–'}<span class="u"> ${g.unit}</span></span></div>
+      <div class="trend ${t.cls}">${trendTxt}</div>
+      ${sparkline(pts,tgt,g.dir)}
+      <div class="prog-outer"><div class="prog-inner ${done?'done':''}" style="width:${pct}%"></div></div>
+      <div class="goalmeta">${distTxt}</div>
+    </div></div>`;
+  }).join('');
+}
+
+/* edit targets */
+document.getElementById('editGoals').addEventListener('click', async ()=>{
+  const hist=await getHistory();
+  const keys=['plank','reach','ankle','sts']; // waist is relative, edited as the −offset
+  const el=document.getElementById('trendList');
+  el.innerHTML = `<div class="goalcard"><h3 style="margin-bottom:8px">Edit your targets</h3>
+    <div class="goalrow" style="border:0;padding:6px 0"><div class="top"><span class="nm">Waist: drop from first reading</span>
+      <input class="goalinput" id="g-waist" value="${Math.abs(GOALS.waist.rel)}"></div>
+      <div class="goalmeta">cm to lose from your first logged waist</div></div>
+    ${keys.map(k=>`<div class="goalrow" style="border-top:1px solid var(--line);padding:8px 0">
+      <div class="top"><span class="nm">${GOALS[k].label} target</span>
+      <input class="goalinput" id="g-${k}" value="${GOALS[k].target}"></div>
+      <div class="goalmeta">${GOALS[k].unit}</div></div>`).join('')}
+    <button class="savebtn" id="saveGoalsBtn" style="margin-top:12px">Save targets</button>
+    <div class="saved" id="goalMsg"></div></div>`;
+  document.getElementById('saveGoalsBtn').addEventListener('click', async ()=>{
+    GOALS.waist.rel = -Math.abs(parseFloat(document.getElementById('g-waist').value)||5);
+    keys.forEach(k=>{ GOALS[k].target = parseFloat(document.getElementById('g-'+k).value)||GOALS[k].target; });
+    await saveGoals();
+    document.getElementById('goalMsg').textContent='Saved ✓';
+    setTimeout(renderTrends, 600);
+  });
+});
+
+/* ============================================================
+   INSIGHTS TAB — direction + numbers + distance + next action
+   ============================================================ */
+async function renderInsights(){
+  const hist=await getHistory();
+  const el=document.getElementById('insightList');
+  if(hist.length<1){ el.innerHTML='<div class="insight tip">Log your first set of numbers in the <b>Log</b> tab to unlock insights.</div>'; return; }
+  const cards=[];
+
+  const g=(k)=>GOALS[k];
+  const pts=(k)=>series(hist,k);
+  const tgt=(k)=>resolvedTarget(hist,k);
+
+  // ---- WAIST ----
+  (()=>{ const s=pts('waist'); if(!s.length) return;
+    const cur=s[s.length-1].v, t=trendOf(s,'down'), goal=tgt('waist');
+    if(!t.enough){ cards.push(['tip',`<b>Waist ${cur}cm logged.</b> One reading so far — keep the weekly cadence and the trend will appear next Sunday.`,'']); return; }
+    if(t.rawDelta<0){ // going down = good
+      const left = goal!=null?+(cur-goal).toFixed(1):null;
+      cards.push(['','', `<b>Waist down ${t.delta}cm since you started</b> — the step floor and rice discipline are working. ${left>0?`${left}cm to your ${goal}cm goal.`:`You've hit your target 🎯`}`,
+        left>0?'Next: hold the 7–8k daily steps and keep protein at ~100–110g. Don\'t cut rice further — steady loss beats crash loss.':'Next: set a new waist target in Trends → Edit, or shift focus to visible-ab work in the Consolidate phase.']);
+    } else if(t.rawDelta===0){
+      cards.push(['warn','',`<b>Waist flat</b> at ${cur}cm across your logs. Not moving usually means intake ≈ burn.`,
+        'Next: add ~1,500 steps/day (toward 9k), and check portion creep — an extra fist of rice or a fried item most days is the usual culprit. Protein stays high.']);
+    } else {
+      cards.push(['warn','',`<b>Waist up ${t.delta}cm.</b> Could be water/measurement timing, but if it holds two weeks it's a real trend.`,
+        'Next: measure same time each Sunday (fasted). Tighten frying to once/week and lock the step floor before changing anything else.']);
+    }
+  })();
+
+  // ---- PLANK ----
+  (()=>{ const s=pts('plank'); if(!s.length) return;
+    const cur=s[s.length-1].v, t=trendOf(s,'up'), goal=g('plank').target;
+    if(cur>=goal){ cards.push(['',`<b>Plank at ${cur}s — goal reached 🎯</b>`,`Core endurance is there.`,'Next: progress to the harder anti-rotation work (full side plank, longer dead-bug holds) rather than chasing a longer plank.']); return; }
+    if(t.enough && t.rawDelta>0){
+      cards.push(['','',`<b>Plank up ${t.delta}s → ${cur}s.</b> ${+(goal-cur)}s to your ${goal}s goal.`,
+        'Next: keep adding ~5s each session. When you can hold 45s clean twice in a row, that\'s the earn-it signal to progress.']);
+    } else if(t.enough && t.rawDelta===0){
+      cards.push(['warn','',`<b>Plank stuck at ${cur}s</b> (${+(goal-cur)}s short).`,
+        'Next: stop training to failure every time — do 3 sets at 80% of max instead. Volume, not maximal holds, breaks a plank plateau. Also check hips aren\'t sagging (that shortens holds).']);
+    } else {
+      cards.push(['tip','',`<b>Plank ${cur}s logged.</b> Target ${goal}s.`,'Log another week to see the trend.']);
+    }
+  })();
+
+  // ---- SIT-AND-REACH ----
+  (()=>{ const s=pts('reach'); if(!s.length) return;
+    const cur=s[s.length-1].v, t=trendOf(s,'up'), goal=g('reach').target;
+    if(cur>=goal){ cards.push(['',`<b>Sit-and-reach at +${cur}cm — goal reached 🎯</b>`,`Hamstring/posterior-chain flexibility is where you wanted it.`,'Next: maintain with the Saturday holds; this range also feeds your leg-split goal.']); return; }
+    if(t.enough && t.rawDelta>0){
+      cards.push(['','',`<b>Reach improved ${t.delta}cm → ${cur}cm.</b> ${+(goal-cur).toFixed(1)}cm to goal, and progress here directly opens your leg split.`,
+        'Next: hold the lying-hamstring and 90/90 stretches to 45–60s, and add the low-lunge daily. Flexibility responds to frequency more than intensity.']);
+    } else if(t.enough){
+      cards.push(['warn','',`<b>Reach flat at ${cur}cm.</b>`,
+        'Next: move the hamstring stretch to daily (even 2×30s), and always warm the muscle first — a hot-water bag on the hamstrings before stretching noticeably improves range. Never bounce.']);
+    }
+  })();
+
+  // ---- KNEE-TO-WALL ----
+  (()=>{ const s=pts('ankle'); if(!s.length) return;
+    const cur=s[s.length-1].v, t=trendOf(s,'up'), goal=g('ankle').target;
+    if(cur>=goal){ cards.push(['',`<b>Knee-to-wall at ${cur}cm — goal reached 🎯</b>`,'Ankle mobility unlocks deeper squats and stairs.','Next: maintain with the twice-weekly ankle rocks.']); return; }
+    if(t.enough && t.rawDelta>0) cards.push(['','',`<b>Ankle mobility up ${t.delta}cm → ${cur}cm.</b> ${+(goal-cur).toFixed(1)}cm to go.`,'Next: keep the knee-to-wall rocks on Mon and Sat; add a calf stretch after walks.']);
+    else if(t.enough) cards.push(['warn','',`<b>Ankle range flat at ${cur}cm.</b>`,'Next: add a daily bent-knee calf/soleus stretch — the soleus is usually what limits knee-to-wall, and it needs the knee bent to lengthen.']);
+  })();
+
+  // ---- SIT-TO-STANDS ----
+  (()=>{ const s=pts('sts'); if(!s.length) return;
+    const cur=s[s.length-1].v, t=trendOf(s,'up'), goal=g('sts').target;
+    if(cur>=goal){ cards.push(['',`<b>Sit-to-stands at ${cur}/30s — goal reached 🎯</b>`,'Leg strength-endurance is solid.','Next: progress to slower tempo or single-leg assisted stands.']); return; }
+    if(t.enough && t.rawDelta>0) cards.push(['','',`<b>Sit-to-stands up ${t.delta} → ${cur} reps.</b> ${+(goal-cur)} to your ${goal} goal.`,'Next: keep the chair squats; when 12 clean reps feel easy twice, cross the arms or slow the lowering to 3s.']);
+    else if(t.enough) cards.push(['warn','',`<b>Sit-to-stands flat at ${cur} reps.</b>`,'Next: add one extra set of glute bridges and chair squats — this number is limited by glute/quad endurance, so add volume there.']);
+  })();
+
+  // ---- VISIBLE ABS (derived) ----
+  (()=>{ const w=pts('waist'), p=pts('plank');
+    if(!w.length) return;
+    const waistTrend=trendOf(w,'down');
+    const wk = (function(){ const st=document.getElementById('startDate').value; if(!st) return null;
+      const diff=Math.floor((Date.now()-new Date(st+'T00:00:00'))/86400000); return diff<0?0:Math.floor(diff/7)+1; })();
+    let msg=`<b>Visible abs — the honest read:</b> definition shows when the waist cover comes off AND the core underneath is built. `;
+    const parts=[];
+    if(waistTrend.enough) parts.push(waistTrend.rawDelta<0?`your waist is trending down (good)`:`your waist isn't dropping yet (this is the main lever)`);
+    if(p.length) parts.push(`plank at ${p[p.length-1].v}s (core is building)`);
+    msg += parts.join(', ') + '. ';
+    let action;
+    if(wk!=null && wk<13) action=`You're in week ${wk}. Realistically, visible definition lands in the Consolidate phase (weeks 13–16), not before — that timeline is by design, not a delay. Stay the course: waist down via steps + protein, core up via dead-bug/side-plank.`;
+    else if(wk!=null) action=`You're in the Consolidate window (week ${wk}) — this is where it becomes visible if the waist number cooperated. Keep protein high, hold the deficit, and don't add crunches (they won't beat the waist math).`;
+    else action=`Set your program start date on the Workout tab so I can tell you where you are on the realistic timeline.`;
+    cards.push(['tip','',msg,action]);
+  })();
+
+  // ---- WATCH cardio (if present) ----
+  const raw=await fbGet('sessions');
+  if(raw && typeof raw==='object'){
+    const arr=(Array.isArray(raw)?raw:Object.values(raw)).filter(Boolean);
+    if(arr.length){
+      const last=arr[arr.length-1];
+      const avg=last.avgHr??last.hrAvg;
+      if(avg) cards.push(['tip','',`<b>Last watch session avg HR ${avg} bpm.</b> Your sessions are logging to the shared database — cardio load is being tracked.`,'Next: aim to spend more session time in Z2 (fat-burn) for the waist goal; short bursts into Z3–4 build the aerobic base.']);
+    }
+  }
+
+  el.innerHTML = cards.map(c=>{
+    const cls=c[0]?(' '+c[0]):'';
+    const head=c[1]?`<div>${c[1]}</div>`:'';
+    const body=c[2]?`<div>${c[2]}</div>`:'';
+    const act=c[3]?`<span class="act">→ ${c[3]}</span>`:'';
+    return `<div class="insight${cls}">${head}${body}${act}</div>`;
+  }).join('');
+}
+
+/* load profile, goals + badge at boot */
+(async ()=>{ setBadge(null); await loadProfile(); await loadGoals(); })();
+
+/* main-nav open hooks */
+document.querySelector('nav').addEventListener('click', e=>{
+  const b = e.target.closest('button[data-tab]'); if(!b) return;
+  if(b.dataset.tab==='progress'){ /* default sub-panel is Log; nothing to load until user taps a sub-tab */ }
+});
+</script>
+</body>
+</html>
