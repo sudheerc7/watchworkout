@@ -159,6 +159,10 @@
   .sesshead .d{font-weight:800;font-size:14px;color:var(--turmeric)}
   .sesshead .w{font-size:11.5px;color:var(--dim)}
   .est{font-size:10.5px;color:var(--dim);font-style:italic;margin-top:6px}
+  .delsess{margin-top:10px;width:100%;background:none;border:1px solid var(--line);
+    color:var(--dim);border-radius:9px;padding:8px;font-size:12px;font-weight:600}
+  .delsess.arm{border-color:var(--chili);color:var(--chili)}
+  .delsess:disabled{opacity:.6}
 
   /* sub-nav (Guide + Progress) */
   .subnav{display:flex;gap:6px;margin-bottom:12px;background:var(--card);border:1px solid var(--line);
@@ -443,6 +447,13 @@ async function fbPut(key, value){
     setBadge(true); return true;
   }catch(e){ setBadge(false); return false; }
 }
+async function fbDelete(key){
+  try{
+    const r = await fetch(fbUrl(key), { method:'DELETE' });
+    if(!r.ok) throw new Error(r.status);
+    setBadge(true); return true;
+  }catch(e){ setBadge(false); return false; }
+}
 
 /* ------------------------------------------------------------
    Store: dual-backend wrapper. Writes to BOTH Firebase and
@@ -496,42 +507,49 @@ const COOLDOWN = [
 ];
 
 const DAYS = [
- {id:'mon', label:'Mon', title:'Lower Body · hips, knees, ankles', meta:'~28 min · strength through safe range',
+ {id:'mon', label:'Mon', title:'Lower Body · hips, knees, ankles', meta:'~32 min · strength through safe range',
   main:[
-   {n:'Chair sit-to-stand', rx:'3×8–12', v:yt('sit to stand chair squat proper form'),
-    cue:'Stand from a chair slowly (3s down), knees tracking over toes, heels planted. The safest squat that exists.',
+   {n:'Chair sit-to-stand', rx:'4×10–15', v:yt('sit to stand chair squat proper form'),
+    cue:'Stand from a chair slowly (3s down), knees tracking over toes, heels planted. Hardest clean version you own. The safest squat that exists.',
     prog:'Wk1–4 hands on thighs · Wk5–8 arms crossed · Wk9–12 slower lowering, lighter touch on the chair'},
-   {n:'Glute bridge', rx:'3×12', v:V.bridge,
-    cue:'Squeeze glutes at the top for 2s, ribs down, no arching the lower back. Builds the muscles that protect your spine.',
+   {n:'Glute bridge', rx:'4×12–15', v:V.bridge,
+    cue:'Squeeze glutes at the top for 2–3s, ribs down, no arching the lower back. Builds the muscles that protect your spine.',
     prog:'Wk5+ pause 3s at top · Wk9+ single-leg assisted (other foot light on floor)'},
+   {n:'Band Romanian deadlift', rx:'3×12–15', v:yt('band romanian deadlift rdl form'),
+    cue:'Stand on the band, flat-back hinge at the hips (not the waist), hips drive forward to stand. Hamstrings and glutes — the posterior chain that also feeds your split and sit-and-reach.',
+    prog:'Firmer band or a slower 3s lower when 15 reps feel clean twice'},
+   {n:'Supported step-up', rx:'3×8–10/side', v:yt('supported step up exercise form'),
+    cue:'Hand on a rail, step onto a low sturdy surface, top heel drives you up, lower slowly. One leg at a time exposes and fixes side-to-side differences.',
+    prog:'Raise the step height or slow the lowering as it gets easy'},
    {n:'Supported split-stance hip flexor stretch', rx:'2×30s/side', v:yt('standing hip flexor stretch supported chair'),
     cue:'Hold a chair, one leg back, tuck the tailbone, shift hips forward gently. Stretch in front of the back hip, never in the lower back.'},
    {n:'Knee-to-wall ankle rocks', rx:'2×10/side', v:V.ankle,
     cue:'Foot flat, drive the knee toward the wall over the toes. Directly unlocks squatting and stairs.',
     prog:'Track the distance in cm — it\u2019s one of your five metrics'},
-   {n:'Supported calf raises', rx:'3×12', v:yt('calf raise supported wall proper form'),
-    cue:'Fingertips on the wall, rise slowly, 3s down. Strong calves = happy knees and ankles.'},
-   {n:'Side-lying leg lift', rx:'2×10/side', v:yt('side lying leg lift glute medius'),
+   {n:'Supported calf raises', rx:'3×15', v:yt('calf raise supported wall proper form'),
+    cue:'Fingertips on the wall, rise slowly, 3s down. Strong calves = happy knees and ankles.',
+    prog:'Wk5+ single-leg'},
+   {n:'Side-lying leg lift', rx:'3×12/side', v:yt('side lying leg lift glute medius'),
     cue:'Top leg straight, lift slowly to hip height. Hip stabilisers — the quiet fix for knee alignment.'}
   ]},
- {id:'tue', label:'Tue', title:'Posture + Pull · back, lats, forearms', meta:'~29 min · stand taller by Friday',
+ {id:'tue', label:'Tue', title:'Posture + Pull · back, lats, forearms', meta:'~33 min · stand taller by Friday',
   main:[
    {n:'Wall angels', rx:'3×8', v:V.angels,
     cue:'Back and head against the wall, slide arms up/down keeping contact. Hard at first — that difficulty IS the posture problem being fixed.',
     prog:'Wk1–4 partial range is fine · goal by Wk12: full slide with wrists on the wall'},
    {n:'Chin tucks', rx:'2×10', v:yt('chin tuck neck posture exercise'),
     cue:'Glide the head straight back (double-chin), hold 3s. Undoes forward-head from desk work.'},
-   {n:'Band bent-over row', rx:'3×10–12', v:V.bandrow,
+   {n:'Band bent-over row', rx:'4×10–15', v:V.bandrow,
     cue:'Hinge at the hips, flat back, pull elbows to the ribs, squeeze shoulder blades 2s. This builds the lats and mid-back you asked for.',
     prog:'Wk1–4 light band · Wk5–8 firmer band · Wk9+ 3s slow release each rep'},
-   {n:'Band lat pulldown (half-kneeling)', rx:'3×10–12', v:yt('half kneeling band lat pulldown anchor door'),
+   {n:'Band lat pulldown (half-kneeling)', rx:'4×10–15', v:yt('half kneeling band lat pulldown anchor door'),
     cue:'Anchor the band high (door anchor or hook), kneel on a cushion, pull elbows down to the ribs and squeeze the armpit muscles 2s. The pulldown angle is what actually widens the lats — rows alone don\u2019t.',
-    prog:'Same earn-it rule: 12 clean reps twice in a row → firmer band or slower release'},
-   {n:'Band pull-apart', rx:'3×12', v:yt('band pull apart tutorial'),
+    prog:'Same earn-it rule: 15 clean reps twice in a row → firmer band or slower release'},
+   {n:'Band pull-apart', rx:'3×15–20', v:yt('band pull apart tutorial'),
     cue:'Arms straight at chest height, stretch the band apart, squeeze between the shoulder blades.'},
-   {n:'Farmer carry (bags/buckets)', rx:'3×30–40s', v:yt('farmer carry proper form home'),
-    cue:'Two filled shopping bags or water cans, walk tall, shoulders back. Forearms, grip, core and posture in one move.',
-    prog:'Add water/weight when 40s feels easy'},
+   {n:'Farmer carry (bags/buckets)', rx:'3×45–60s', v:yt('farmer carry proper form home'),
+    cue:'Two filled shopping bags or water cans, walk tall, shoulders back. Forearms, grip, core and posture in one move. It should feel genuinely heavy by the last 15 seconds.',
+    prog:'Add water/weight whenever 60s feels easy — the load is the exercise'},
    {n:'Towel wring', rx:'2×10 each way', v:yt('towel wring forearm exercise'),
     cue:'Twist a rolled towel hard in both directions. Direct forearm work, zero joint stress.'},
    {n:'Wrist prep (handstand base)', rx:'2×10 each', v:yt('wrist warm up mobility push up prep'),
@@ -544,33 +562,37 @@ const DAYS = [
    {n:'Cat–Cow + Child\u2019s pose', rx:'5 min', v:V.catcow, cue:'Gentle spine movement, then sit back into child\u2019s pose and breathe.'},
    {n:'Legs-up-the-wall', rx:'10 min (evening)', v:yt('legs up the wall pose benefits how to'), cue:'Optional but recommended — lower back decompression.'}
   ]},
- {id:'thu', label:'Thu', title:'Push + Core · chest, abs', meta:'~30 min · the abdomen work, done safely',
+ {id:'thu', label:'Thu', title:'Push + Core · chest, abs', meta:'~34 min · the abdomen work, done safely',
   main:[
-   {n:'Wall → Incline push-up', rx:'3×8–12', v:V.wallpush,
-    cue:'Body in one straight line, elbows ~45° from ribs, chest to the surface. Chest and arms without wrist or shoulder strain.',
-    prog:'Wall → kitchen counter → sturdy table → firm sofa arm. Advance only by the earn-it rule (12 clean reps ×2 sessions), not the calendar', v2:V.incline},
-   {n:'Band chest press (standing)', rx:'3×10–12', v:yt('standing band chest press anchor behind'),
+   {n:'Push-up (your level)', rx:'4×8–15', v:V.wallpush,
+    cue:'Body in one straight line, elbows ~45° from ribs, chest to the surface. Hardest level you own. Chest and arms without wrist or shoulder strain.',
+    prog:'Wall → kitchen counter → sturdy table → firm sofa arm → knees on floor → full push-up. Advance only by the earn-it rule (top of range ×2 sessions), not the calendar', v2:V.incline},
+   {n:'Band chest press (standing)', rx:'4×10–15', v:yt('standing band chest press anchor behind'),
     cue:'Band anchored behind you at chest height (or wrapped around the upper back), press forward and squeeze the chest 1s. Second chest movement — this is where the pressing volume for a built chest comes from, with zero wrist load.',
-    prog:'Earn-it rule: 12 clean reps twice → firmer band or 3s slow return'},
-   {n:'Dead bug', rx:'3×8/side', v:V.deadbug,
+    prog:'Earn-it rule: top of range twice → firmer band or 3s slow return'},
+   {n:'Dead bug', rx:'3×10/side', v:V.deadbug,
     cue:'Lower back gently pressed to the floor the whole time; opposite arm and leg extend slowly. THE ab exercise for a 48-year-old spine — everything a crunch does, none of the neck/back cost.'},
-   {n:'Bird dog', rx:'3×8/side', v:V.birddog,
+   {n:'Bird dog', rx:'3×10/side', v:V.birddog,
     cue:'Opposite arm and leg reach out slowly; imagine a cup of water balanced on your lower back. Abs + lower-back protection together.'},
-   {n:'Knee side plank', rx:'2×15–25s/side', v:yt('side plank on knees tutorial'),
+   {n:'Band Pallof press', rx:'3×10/side', v:yt('pallof press band anti rotation core'),
+    cue:'Band anchored at chest height to the side, hold at the sternum and press straight out — refuse to let it twist you. Anti-rotation core, the deep stability that protects the spine and builds a hard midsection.',
+    prog:'Step further from the anchor or use a firmer band to increase the pull'},
+   {n:'Knee side plank', rx:'3×20–40s/side', v:yt('side plank on knees tutorial'),
     cue:'From knees, hips lifted in one line. The obliques that shape the waist.',
     prog:'Wk9+ try full side plank for 10s if wrists/shoulders are quiet'},
-   {n:'Forearm plank', rx:'2× max hold', v:yt('forearm plank proper form beginner'),
+   {n:'Forearm plank', rx:'3× max hold', v:yt('forearm plank proper form beginner'),
     cue:'On forearms (kind to wrists), knees down if needed. Squeeze glutes, don\u2019t let hips sag. Stop 2s before form breaks.',
     prog:'Target: +10s every 2 weeks. This is a tracked metric.'}
   ]},
- {id:'fri', label:'Fri', title:'Full Body + Grip · circuit day', meta:'~28 min · 3 rounds, rest 60–90s between rounds',
+ {id:'fri', label:'Fri', title:'Full Body + Grip · circuit day', meta:'~30 min · 3 rounds, rest 60–90s between rounds',
   main:[
-   {n:'Round: Chair sit-to-stand', rx:'×10', cue:'Same form as Monday — smooth and quiet.'},
-   {n:'Round: Band row', rx:'×10', v:V.bandrow, cue:'Flat back, squeeze 2s.'},
-   {n:'Round: Wall/incline push-up', rx:'×8', v:V.incline, cue:'Whichever level you\u2019re on this phase.'},
-   {n:'Round: Glute bridge march', rx:'×6/side', v:yt('glute bridge march tutorial'), cue:'Hold the bridge, slowly lift one foot then the other. Core + glutes, zero spine load.'},
-   {n:'Round: Suitcase carry', rx:'30s/side', v:yt('suitcase carry exercise tutorial'), cue:'One heavy bag, one side at a time, stay perfectly upright — obliques and grip.'},
-   {n:'Finisher: brisk walk', rx:'8–10 min', cue:'Slightly faster than Wednesday\u2019s pace.'}
+   {n:'Chair sit-to-stand', rx:'3×12', v:yt('sit to stand chair squat proper form'), cue:'Same form as Monday — smooth and quiet.'},
+   {n:'Band row', rx:'3×12', v:V.bandrow, cue:'Flat back, squeeze shoulder blades 2s.'},
+   {n:'Push-up (your level)', rx:'3×10', v:V.incline, cue:'Whichever level you\u2019ve earned this phase.'},
+   {n:'Band Romanian deadlift', rx:'3×12', v:yt('band romanian deadlift rdl form'), cue:'Flat-back hinge, hips do the work. Hamstrings and glutes.'},
+   {n:'Glute bridge march', rx:'3×8/side', v:yt('glute bridge march tutorial'), cue:'Hold the bridge, slowly lift one foot then the other. Core + glutes, zero spine load.'},
+   {n:'Suitcase carry', rx:'3×40s/side', v:yt('suitcase carry exercise tutorial'), cue:'One heavy bag, one side at a time, stay perfectly upright — obliques and grip.'},
+   {n:'Brisk walk', rx:'8–10 min', cue:'Slightly faster than Wednesday\u2019s pace.'}
   ]},
  {id:'sat', label:'Sat', title:'Flexibility Flow · the long stretch day', meta:'~30 min · this is where the flexibility goals are won',
   main:[
@@ -874,7 +896,7 @@ function zoneRow(n, label, secs, total){
 }
 
 /* render one session record (defensive about missing fields) */
-function sessionCard(s){
+function sessionCard(s, fbKey){
   const d = s.date || s.day || '—';
   const wname = s.workout || s.dayName || '';
   const avg = s.avgHr ?? s.hrAvg ?? '–';
@@ -906,6 +928,7 @@ function sessionCard(s){
     </div>
     ${zonesHtml?`<div style="margin-top:10px">${zonesHtml}</div>`:''}
     <div class="est">All sensor-derived values are estimates.</div>
+    ${fbKey?`<button class="delsess" data-key="${fbKey}">🗑 Remove from database</button>`:''}
   </div>`;
 }
 
@@ -921,18 +944,38 @@ async function loadStats(){
     summary.textContent = 'Connected to the database, but no watch sessions found yet. Finish a session on the watch, then pull to refresh.';
     list.innerHTML = ''; return;
   }
-  // sessions may be an object keyed by id, or an array
-  let arr = Array.isArray(raw) ? raw.slice() : Object.values(raw);
-  arr = arr.filter(Boolean);
+  // sessions may be an object keyed by id, or an array — keep the key for deletion
+  let entries;
+  if(Array.isArray(raw)){
+    entries = raw.map((v,i)=>({key:String(i), val:v})).filter(e=>e.val);
+  } else {
+    entries = Object.keys(raw).map(k=>({key:k, val:raw[k]})).filter(e=>e.val);
+  }
   // sort newest first by date/timestamp if present
-  arr.sort((a,b)=>{
-    const ta = a.ts ?? Date.parse(a.date||'') ?? 0;
-    const tb = b.ts ?? Date.parse(b.date||'') ?? 0;
+  entries.sort((a,b)=>{
+    const ta = a.val.ts ?? Date.parse(a.val.date||'') ?? 0;
+    const tb = b.val.ts ?? Date.parse(b.val.date||'') ?? 0;
     return tb - ta;
   });
-  summary.textContent = arr.length + ' session' + (arr.length===1?'':'s') + ' from your watch:';
-  list.innerHTML = arr.map(sessionCard).join('');
+  summary.textContent = entries.length + ' session' + (entries.length===1?'':'s') + ' from your watch:';
+  list.innerHTML = entries.map(e=>sessionCard(e.val, e.key)).join('');
 }
+
+/* delete a session from Firebase (tap-to-confirm; browser + cloud only) */
+document.getElementById('sessionList').addEventListener('click', async e=>{
+  const btn = e.target.closest('.delsess'); if(!btn) return;
+  const key = btn.dataset.key;
+  if(!btn.classList.contains('arm')){
+    btn.classList.add('arm');
+    btn.textContent = 'Tap again to remove';
+    setTimeout(()=>{ if(btn.isConnected){ btn.classList.remove('arm'); btn.textContent='🗑 Remove from database'; } }, 3500);
+    return;
+  }
+  btn.textContent = 'Removing…'; btn.disabled = true;
+  const ok = await fbDelete('sessions/'+key);
+  if(ok){ loadStats(); }              // re-render from the now-updated DB
+  else { btn.disabled=false; btn.classList.remove('arm'); btn.textContent='Couldn’t remove — retry'; }
+});
 
 /* ============================================================
    SUB-NAV (Guide + Progress internal tabs)
